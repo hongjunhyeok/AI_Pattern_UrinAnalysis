@@ -68,6 +68,8 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     double RGB[][] = new double[4][3];
     double RGB1[]=new double[3];
     double RGB2[]=new double[3];
+
+
     double RGB3[]=new double[3];
     double RGB4[]=new double[3];
     // HSV detect
@@ -94,7 +96,10 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     double[][] RGB_value_GLOUCOSE = new double[6][3];
 
     double calcul_H[][]=new double[4][3]; //  4개의 영역에 대한 H 값 -> 깃허브수식사용
-
+    Rect[] bubble_array;
+    Rect[] array2;
+    Rect[] array3;
+    Rect[] array4;
 
 
     @Override
@@ -250,15 +255,18 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 //        cropped_img = new Mat(mGray,new Rect(t1,t2));
 
         if(mJavaDetector!=null){
-            mJavaDetector.detectMultiScale(mGray,bubble_rect,1.1,10,0,new Size(),new Size());
-//            mJavaDetector2.detectMultiScale(mGray,rect2,1.1,5,0,new Size(),new Size());
-//            mJavaDetector3.detectMultiScale(mGray,rect2,1.1,5,0,new Size(),new Size());
-//            mJavaDetector4.detectMultiScale(mGray,rect2,1.1,5,0,new Size(),new Size());
+            mJavaDetector.detectMultiScale(mGray,bubble_rect,1.3,5,0,new Size(),new Size());
+            mJavaDetector2.detectMultiScale(mGray,rect2,1.5,5,0,new Size(),new Size());
+            mJavaDetector3.detectMultiScale(mGray,rect2,1.5,5,0,new Size(),new Size());
+            mJavaDetector4.detectMultiScale(mGray,rect2,1.5,5,0,new Size(),new Size());
         }
-        Rect[] bubble_array= bubble_rect.toArray();
-        Rect[] array2=rect2.toArray();
-        Rect[] array3=rect3.toArray();
-        Rect[] array4=rect4.toArray();
+        bubble_array= bubble_rect.toArray();
+        array2=rect2.toArray();
+        array3=rect3.toArray();
+        array4=rect4.toArray();
+
+
+
         double corner1_circle_center_x=0;
         double corner1_circle_center_y=0;
         for(int k=0;k<bubble_array.length;k++){
@@ -267,109 +275,31 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
                     new Point(bubble_array[k].br().x,bubble_array[k].br().y),
                     new Scalar(255,0,0));
 
-
-
-
         }
-        if(bubble_array.length==4) {
-            Double array_x[]=new Double[4];
-            Double array_y[]=new Double[4];
-            Double maxx=0.0,maxy=0.0,minx=10000.0,miny=10000.0;
-            for (int k = 0; k < bubble_array.length; k++) {
 
-                Log.i(TAG,k+1+"번째 위치"+bubble_array[k].tl().x+","+bubble_array[k].tl().y);
-
-                array_x[k]=(bubble_array[k].tl().x+bubble_array[k].br().x)/2;
-                array_y[k]=(bubble_array[k].tl().y+bubble_array[k].br().y)/2;
-
-            }
-            for (int i=0;i<4;i++){
-                if(maxx < array_x[i])maxx=array_x[i];
-
-                if(maxy < array_y[i])maxy=array_y[i];
-
-                if(minx > array_x[i])minx=array_x[i];
-
-                if(miny > array_y[i])miny=array_y[i];
-
-            }
-            double middlex=0.0,middley=0.0;
-
-            double[] loc_y=new double[6];
-
-
-
-
-            middlex=(maxx+minx)/2;
-            middley=(maxy+miny)/2;
-
-
-
-            for(int i=0;i<6;i++){
-                if(i>=3)
-                    loc_y[i]=middley+(50*i);
-                else
-                    loc_y[i]=middley-250+(50*i);
-            }
-
-            Imgproc.circle(mRgba,new Point(middlex,middley),10,new Scalar(255,255,255));
-            Imgproc.circle(mRgba,new Point(middlex+73,middley),10,new Scalar(255,255,255));
-            Imgproc.circle(mRgba,new Point(middlex+146,middley),10,new Scalar(255,255,255));
-            Imgproc.circle(mRgba,new Point(middlex+219,middley),10,new Scalar(255,255,255));
-
-            for(int i=0;i<6;i++){
-                Imgproc.circle(mRgba,new Point(middlex,loc_y[i]),15,new Scalar(255,255,255));
-            }
-
-
-
-
-
-            double[] rgbV1 = mRgba.get((int)middley, (int)middlex);
-            double[] rgbV2 = mRgba.get((int)(middley), (int)middlex+73);
-            double[] rgbV3 = mRgba.get((int)(middley), (int)middlex+146);
-            double[] rgbV4 = mRgba.get((int)(middley), (int)middlex+219);
-
-            double[][] rgbV11= new double[6][3];
-
-            for(int i=0;i<6;i++){
-                rgbV11[i]=mRgba.get((int)loc_y[i],(int)middlex);
-            }
-
-            RGB_value= rgbV1;
-            RGB_value2=rgbV2;
-            RGB_value3=rgbV3;
-            RGB_value4=rgbV4;
-
-            RGB_value_GLOUCOSE=rgbV11;
-
+        for(int k=0;k<array2.length;k++){
+            Imgproc.rectangle(mRgba,
+                    new Point(array2[k].tl().x,array2[k].tl().y),
+                    new Point(array2[k].br().x,array2[k].br().y),
+                    new Scalar(255,255,255));
         }
-//        for(int k=0;k<array2.length;k++){
-//            Imgproc.rectangle(mRgba,
-//                    new Point(array2[k].tl().x,array2[k].tl().y),
-//                    new Point(array2[k].br().x,array2[k].br().y),
-//                    new Scalar(255,255,0));
-//
-//
-//        }
-//        for(int k=0;k<array3.length;k++){
-//            Imgproc.rectangle(mRgba,
-//                    new Point(array3[k].tl().x,array3[k].tl().y),
-//                    new Point(array3[k].br().x,array3[k].br().y),
-//                    new Scalar(255,0,255));
-//        }
-//        for(int k=0;k<array4.length;k++){
-//            Imgproc.rectangle(mRgba,
-//                    new Point(array4[k].tl().x,array4[k].tl().y),
-//                    new Point(array4[k].br().x,array4[k].br().y),
-//                    new Scalar(100,0,255));
-//        }
-
-
-
+        for(int k=0;k<array3.length;k++){
+            Imgproc.rectangle(mRgba,
+                    new Point(array3[k].tl().x,array3[k].tl().y),
+                    new Point(array3[k].br().x,array3[k].br().y),
+                    new Scalar(0,0,0));
+        }
+        for(int k=0;k<array4.length;k++){
+            Imgproc.rectangle(mRgba,
+                    new Point(array4[k].tl().x,array4[k].tl().y),
+                    new Point(array4[k].br().x,array4[k].br().y),
+                    new Scalar(100,0,255));
+        }
         Imgproc.rectangle(mRgba,new Point(cropped_x,cropped_y),new Point(cropped_x+cropped_w,cropped_y+cropped_h),new Scalar(255,255,255),2);
-
         return mRgba;
+
+
+
     }
     private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
         @Override
@@ -379,8 +309,8 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
                     Log.i(TAG, "OpenCV loaded successfully");
 
                     try {
-                        InputStream is = getResources().openRawResource(R.raw.cascade_b1);
-                        InputStream is_man=getResources().openRawResource(R.raw.cascade_b2);
+                        InputStream is = getResources().openRawResource(R.raw.cascade00);
+                        InputStream is_man=getResources().openRawResource(R.raw.cascade_oct);
                         InputStream is_3=getResources().openRawResource(R.raw.cascade_b3);
                         InputStream is_4=getResources().openRawResource(R.raw.cascade_b4);
 
@@ -519,5 +449,57 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         builder.create().show();
     }
 
+    protected void doProcess(){
+        if(bubble_array.length==1 && array2.length==1 && array3.length==1 && array4.length==1) {
+
+
+            Double array_x[]=new Double[4];
+            Double array_y[]=new Double[4];
+            Double maxx=0.0,maxy=0.0,minx=10000.0,miny=10000.0;
+
+            for (int k = 0; k < bubble_array.length; k++) {
+                Log.i(TAG,k+1+"번째 위치"+bubble_array[k].tl().x+","+bubble_array[k].tl().y);
+                array_x[k]=(bubble_array[k].tl().x+bubble_array[k].br().x)/2;
+                array_y[k]=(bubble_array[k].tl().y+bubble_array[k].br().y)/2;
+            }
+            for (int i=0;i<4;i++){
+                if(maxx < array_x[i])maxx=array_x[i];
+                if(maxy < array_y[i])maxy=array_y[i];
+                if(minx > array_x[i])minx=array_x[i];
+                if(miny > array_y[i])miny=array_y[i];
+            }
+            double middlex=0.0,middley=0.0;
+            double[] loc_y=new double[6];
+            double[][] rgbV11= new double[6][3];
+            middlex=(maxx+minx)/2;
+            middley=(maxy+miny)/2;
+
+            for(int i=0;i<6;i++){
+                if(i>=3)
+                    loc_y[i]=middley+(50*i);
+                else
+                    loc_y[i]=middley-250+(50*i);
+                Imgproc.circle(mRgba,new Point(middlex,loc_y[i]),15,new Scalar(255,255,255));
+                rgbV11[i]=mRgba.get((int)loc_y[i],(int)middlex);
+            }
+
+            Imgproc.circle(mRgba,new Point(middlex,middley),10,new Scalar(255,255,255));
+            Imgproc.circle(mRgba,new Point(middlex+73,middley),10,new Scalar(255,255,255));
+            Imgproc.circle(mRgba,new Point(middlex+146,middley),10,new Scalar(255,255,255));
+            Imgproc.circle(mRgba,new Point(middlex+219,middley),10,new Scalar(255,255,255));
+
+            double[] rgbV1 = mRgba.get((int)middley, (int)middlex);
+            double[] rgbV2 = mRgba.get((int)(middley), (int)middlex+73);
+            double[] rgbV3 = mRgba.get((int)(middley), (int)middlex+146);
+            double[] rgbV4 = mRgba.get((int)(middley), (int)middlex+219);
+
+            RGB_value= rgbV1;
+            RGB_value2=rgbV2;
+            RGB_value3=rgbV3;
+            RGB_value4=rgbV4;
+            RGB_value_GLOUCOSE=rgbV11;
+        }
+
+    }
 
 }
