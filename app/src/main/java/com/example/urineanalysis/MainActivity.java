@@ -41,6 +41,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity implements CameraBridgeViewBase.CvCameraViewListener2{
 
@@ -256,9 +257,9 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
         if(mJavaDetector!=null){
             mJavaDetector.detectMultiScale(mGray,bubble_rect,1.3,5,0,new Size(),new Size());
-            mJavaDetector2.detectMultiScale(mGray,rect2,1.5,5,0,new Size(),new Size());
-            mJavaDetector3.detectMultiScale(mGray,rect2,1.5,5,0,new Size(),new Size());
-            mJavaDetector4.detectMultiScale(mGray,rect2,1.5,5,0,new Size(),new Size());
+            mJavaDetector2.detectMultiScale(mGray,rect2,1.2,5,0,new Size(),new Size());
+            mJavaDetector3.detectMultiScale(mGray,rect2,1.2,5,0,new Size(),new Size());
+            mJavaDetector4.detectMultiScale(mGray,rect2,1.2,5,0,new Size(),new Size());
         }
         bubble_array= bubble_rect.toArray();
         array2=rect2.toArray();
@@ -277,24 +278,38 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
         }
 
-        for(int k=0;k<array2.length;k++){
-            Imgproc.rectangle(mRgba,
-                    new Point(array2[k].tl().x,array2[k].tl().y),
-                    new Point(array2[k].br().x,array2[k].br().y),
-                    new Scalar(255,255,255));
-        }
-        for(int k=0;k<array3.length;k++){
-            Imgproc.rectangle(mRgba,
-                    new Point(array3[k].tl().x,array3[k].tl().y),
-                    new Point(array3[k].br().x,array3[k].br().y),
-                    new Scalar(0,0,0));
-        }
-        for(int k=0;k<array4.length;k++){
-            Imgproc.rectangle(mRgba,
-                    new Point(array4[k].tl().x,array4[k].tl().y),
-                    new Point(array4[k].br().x,array4[k].br().y),
-                    new Scalar(100,0,255));
-        }
+//        for(int k=0;k<array2.length;k++){
+//            Imgproc.rectangle(mRgba,
+//                    new Point(array2[k].tl().x,array2[k].tl().y),
+//                    new Point(array2[k].br().x,array2[k].br().y),
+//                    new Scalar(255,255,255));
+//            Imgproc.putText(mRgba,"1",array2[k].tl(),1,3,new Scalar(255,0,0),2);
+//
+//        }
+//        for(int k=0;k<array3.length;k++){
+//            Imgproc.rectangle(mRgba,
+//                    new Point(array3[k].tl().x,array3[k].tl().y),
+//                    new Point(array3[k].br().x,array3[k].br().y),
+//                    new Scalar(0,0,0));
+//            Imgproc.putText(mRgba,"2",array3[k].tl(),1,3,new Scalar(255,0,0),2);
+//
+//        }
+//        for(int k=0;k<array4.length;k++){
+//            Imgproc.rectangle(mRgba,
+//                    new Point(array4[k].tl().x,array4[k].tl().y),
+//                    new Point(array4[k].br().x,array4[k].br().y),
+//                    new Scalar(100,0,255));
+//            Imgproc.putText(mRgba,"3",array4[k].tl(),1,3,new Scalar(255,0,0),2);
+//
+//        }
+
+        doProcess();
+
+
+
+
+
+
         Imgproc.rectangle(mRgba,new Point(cropped_x,cropped_y),new Point(cropped_x+cropped_w,cropped_y+cropped_h),new Scalar(255,255,255),2);
         return mRgba;
 
@@ -310,9 +325,9 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
                     try {
                         InputStream is = getResources().openRawResource(R.raw.cascade00);
-                        InputStream is_man=getResources().openRawResource(R.raw.cascade_oct);
-                        InputStream is_3=getResources().openRawResource(R.raw.cascade_b3);
-                        InputStream is_4=getResources().openRawResource(R.raw.cascade_b4);
+                        InputStream is_man=getResources().openRawResource(R.raw.cascade00);
+                        InputStream is_3=getResources().openRawResource(R.raw.cascade_octstar);
+                        InputStream is_4=getResources().openRawResource(R.raw.cascade2);
 
 //                        scaleFactor=1.11;minNeighbors=5;
 //                        mN1=10; mN2=5; mN3=10;
@@ -449,44 +464,172 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         builder.create().show();
     }
 
+    // 0 1 2 3 인덱스 = 11, 1, 5, 7시 위치한 좌표
+    Double sorted_x[]=new Double[4];
+    Double sorted_y[]=new Double[4];
+
+    boolean first=true;
+
     protected void doProcess(){
-        if(bubble_array.length==1 && array2.length==1 && array3.length==1 && array4.length==1) {
+        if(bubble_array.length==4) {
+
 
 
             Double array_x[]=new Double[4];
             Double array_y[]=new Double[4];
             Double maxx=0.0,maxy=0.0,minx=10000.0,miny=10000.0;
 
+            //각 꼭지점 위치 정보 모음 (순서 상관 없음)
             for (int k = 0; k < bubble_array.length; k++) {
-                Log.i(TAG,k+1+"번째 위치"+bubble_array[k].tl().x+","+bubble_array[k].tl().y);
                 array_x[k]=(bubble_array[k].tl().x+bubble_array[k].br().x)/2;
                 array_y[k]=(bubble_array[k].tl().y+bubble_array[k].br().y)/2;
             }
-            for (int i=0;i<4;i++){
-                if(maxx < array_x[i])maxx=array_x[i];
-                if(maxy < array_y[i])maxy=array_y[i];
-                if(minx > array_x[i])minx=array_x[i];
-                if(miny > array_y[i])miny=array_y[i];
+
+            Log.i(TAG,"\narray_[0] = {"+String.format(Locale.KOREA,"%.2f , %.2f",array_x[0],array_y[0]) +"}\n"+
+                    "array1 = {"+String.format(Locale.KOREA,"%.2f , %.2f",array_x[1],array_y[1]) +"}\n"+
+                    "array2 = {"+String.format(Locale.KOREA,"%.2f , %.2f",array_x[2],array_y[2]) +"}\n"+
+                    "array3 = {"+String.format(Locale.KOREA,"%.2f , %.2f",array_x[3],array_y[3]) +"}");
+
+            //11,1,5,7시 방향을 0 1 2 3 인덱스로 맞추기 위해 정렬
+            double tmp_max=0,tmp_min=1000000;
+            int index_2=0,index_0=0;
+            for (int k=0;k<bubble_array.length;k++){
+                if((array_x[k]+array_y[k])>tmp_max) {
+                    tmp_max = array_x[k] + array_y[k];
+                    index_2=k;
+                }
+
+
+                if((array_x[k]+array_y[k])<tmp_min){
+                    tmp_min=array_x[k]+array_y[k];
+                    index_0=k;
+                }
             }
+
+            int index_1=0,index_3=0;
+            double tmp_max2=0,tmp_min2=100000;
+            for (int k=0;k<4;k++){
+                if(k==index_2 || k==index_0) {
+                    continue;
+                }
+
+                if(array_x[k]>tmp_max2)
+                {
+                    tmp_max2=array_x[k];
+                    index_1=k;
+                }
+
+                if(array_x[k]<tmp_min2)
+                {
+                    tmp_min2=array_x[k];
+                    index_3=k;
+                }
+
+            }
+
+
+            sorted_x[0]=array_x[index_0]; sorted_y[0]=array_y[index_0];
+            sorted_x[1]=array_x[index_1]; sorted_y[1]=array_y[index_1];
+            sorted_x[2]=array_x[index_2]; sorted_y[2]=array_y[index_2];
+            sorted_x[3]=array_x[index_3]; sorted_y[3]=array_y[index_3];
+
+            String sor=String.format(Locale.KOREA,"%.2f",sorted_x[0]);
+
+//            Log.i(TAG,"\nsorted_x[0],sorted_y[0] = {"+String.format(Locale.KOREA,"%.2f , %.2f",sorted_x[0],sorted_y[0]) +"}\n"+
+//                    "sorted_x[1],sorted_y[1] = {"+String.format(Locale.KOREA,"%.2f , %.2f",sorted_x[1],sorted_y[1]) +"}\n"+
+//                    "sorted_x[2],sorted_y[2] = {"+String.format(Locale.KOREA,"%.2f , %.2f",sorted_x[2],sorted_y[2]) +"}\n"+
+//                    "sorted_x[3],sorted_y[3] = {"+String.format(Locale.KOREA,"%.2f , %.2f",sorted_x[3],sorted_y[3]) +"}");
+
+
+
             double middlex=0.0,middley=0.0;
+            double[] loc_x=new double[4];
             double[] loc_y=new double[6];
             double[][] rgbV11= new double[6][3];
-            middlex=(maxx+minx)/2;
-            middley=(maxy+miny)/2;
 
-            for(int i=0;i<6;i++){
-                if(i>=3)
-                    loc_y[i]=middley+(50*i);
-                else
-                    loc_y[i]=middley-250+(50*i);
-                Imgproc.circle(mRgba,new Point(middlex,loc_y[i]),15,new Scalar(255,255,255));
-                rgbV11[i]=mRgba.get((int)loc_y[i],(int)middlex);
+            double distanceX_ratio=0.073;
+            double distanceX=((sorted_x[1]-sorted_x[0])+(sorted_x[2]-sorted_x[3]))/2;
+
+            double distanceY_ratio=0.073;
+            double distanceY=((sorted_y[3]-sorted_y[0])+(sorted_y[2]-sorted_y[1]))/2;
+
+            double ratio=distanceX/1000;
+
+            double angle = calculateAngle();
+
+            middlex=(sorted_x[0]+sorted_x[2])/2;
+            middley=(sorted_y[0]+sorted_y[2])/2;
+
+
+
+
+
+//            for(int i=0;i<4;i++){
+//
+//                if(i%2==0) {
+//                    loc_x[i] = middlex + (distanceX * distanceX_ratio) * i;
+//                }
+//                Imgproc.circle(mRgba,new Point(loc_x[i],middley),10,new Scalar(255,255,255));
+//
+//            }
+//
+
+            loc_x[0]=middlex-50; loc_x[1]=middlex+50;
+            loc_y[0]=middley-50; loc_y[1]=middley+50;
+
+            Point[] p= new Point[5];
+
+
+            for(int i=0;i<=4;i++){
+                if(i==0) {
+                    p[0]=new Point (-50,-50);
+
+                }
+                if(i==1){
+                    p[i]=new Point (50,-50);
+                }
+                if(i==2){
+                    p[i]=new Point (50,50);
+                }
+                if(i==3){
+                    p[i]=new Point (-50,50);
+                }
+                if(i==4){
+                    p[i]=new Point (-50,-150);
+                }
             }
 
-            Imgproc.circle(mRgba,new Point(middlex,middley),10,new Scalar(255,255,255));
-            Imgproc.circle(mRgba,new Point(middlex+73,middley),10,new Scalar(255,255,255));
-            Imgproc.circle(mRgba,new Point(middlex+146,middley),10,new Scalar(255,255,255));
-            Imgproc.circle(mRgba,new Point(middlex+219,middley),10,new Scalar(255,255,255));
+            int size=50;
+            for(int i=0;i<=4;i++){
+
+                //angle만큼 회전이동 후 middlex,middley만큼 평행이동.
+                //x'=xcos(a)-ysin(a) , y' = xsin(a) + ycos(a)
+                double x= middlex+   (Math.cos(angle)*p[i].x-Math.sin(angle)*p[i].y);
+                double y= middley+   (Math.sin(angle)*p[i].x+Math.cos(angle)*p[i].y);
+
+                Imgproc.circle(mRgba,new Point(x,y),(int)(10),new Scalar(255,255,255));
+            }
+
+
+
+
+//            for(int i=0;i<4;i++){
+//
+//                if(i%2==0){
+//                    loc_y[i]=middley-(140*ratio)-(40*ratio)*i;
+//                }
+//                else{
+//                    loc_y[i]=middley+(140*ratio)+(40*ratio)*(i-1);
+//
+//                }
+//                for(int j=0;j<4;j++){
+//                Imgproc.circle(mRgba,new Point(loc_x[i],loc_y[j]),(int)(15*ratio),new Scalar(255,255,255));
+//             }
+//            }
+//
+
+//            rgbV11[i]=mRgba.get((int)loc_y[i],(int)middlex);
+
 
             double[] rgbV1 = mRgba.get((int)middley, (int)middlex);
             double[] rgbV2 = mRgba.get((int)(middley), (int)middlex+73);
@@ -498,8 +641,29 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
             RGB_value3=rgbV3;
             RGB_value4=rgbV4;
             RGB_value_GLOUCOSE=rgbV11;
+
+
+            Imgproc.putText(mRgba,"0",new Point(sorted_x[0],sorted_y[0]),1,3,new Scalar(255,0,0),2);
+            Imgproc.putText(mRgba,"1",new Point(sorted_x[1],sorted_y[1]),1,3,new Scalar(255,0,0),2);
+            Imgproc.putText(mRgba,"2",new Point(sorted_x[2],sorted_y[2]),1,3,new Scalar(255,0,0),2);
+            Imgproc.putText(mRgba,"3",new Point(sorted_x[3],sorted_y[3]),1,3,new Scalar(255,0,0),2);
+
+            Imgproc.putText(mRgba,String.format("height : %.2f",16*(distanceX/1000)),new Point(sorted_x[0]+distanceX*distanceX_ratio,sorted_y[0]),1,3,new Scalar(255,0,0),2);
+            Imgproc.putText(mRgba,String.format("angle : %.2f",angle),new Point(sorted_x[0],sorted_y[0]+100),1,3,new Scalar(255,0,0),2);
+
         }
 
     }
+
+    double calculateAngle(){
+        double dx= sorted_x[1]-sorted_x[0];
+        double dy= sorted_y[1]-sorted_y[0];
+
+        double radian = Math.atan(dy/dx);
+        double degree=(double)(57.295779*radian);
+
+        return radian;
+    }
+
 
 }
