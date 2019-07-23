@@ -666,4 +666,59 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     }
 
 
+    void drawPoint(){
+        Point[] p=new Point[4];
+        Point[] gloucose_p=new Point[6];
+        Point[] protein_p =new Point[6];
+        Point[] bilirubin_p =new Point[6];
+        Point[] urobilinogen_p =new Point[6];
+
+        int size =45;
+        for(int i=0;i<=4;i++){
+            if(i==0) {
+                p[0]=new Point (-size,-size);
+
+            }
+            if(i==1){
+                p[i]=new Point (size,-size);
+            }
+            if(i==2){
+                p[i]=new Point (size,size);
+            }
+            if(i==3){
+                p[i]=new Point (-size,size);
+            }
+        }
+
+
+        for(int i=0;i<6;i++){
+            gloucose_p[i]=new Point(-size,-240+45*i);
+            if(i>=3){
+                gloucose_p[i]=new Point(-size,-20+45*i);
+            }
+        }
+
+        for(int i=0;i<6;i++){
+            bilirubin_p[i]=new Point(-size,-240+45*i);
+            if(i>=3){
+                bilirubin_p[i]=new Point(-size,-20+45*i);
+            }
+        }
+
+        for(int i=0;i<6;i++){
+            urobilinogen_p[i]=new Point(-size,-240+45*i);
+            if(i>=3){
+                urobilinogen_p[i]=new Point(-size,-20+45*i);
+            }
+        }
+
+
+        for(int i=0;i<6;i++){
+            protein_p[i]=new Point(-size,-240+45*i);
+            if(i>=3){
+                protein_p[i]=new Point(-size,-20+45*i);
+            }
+        }
+
+    }
 }
