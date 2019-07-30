@@ -32,6 +32,13 @@
             android:text="Save" />
 
         <Button
+            android:id="@+id/btn_TimerStop"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:text="Stop" />
+
+        <Button
             android:id="@+id/button2"
             android:layout_width="match_parent"
             android:layout_height="0dp"
@@ -69,6 +76,20 @@
             android:layout_weight="1"
             android:text="RBC"
             android:textSize="10sp" />
+
+        <Button
+            android:id="@+id/btn_TimerUp"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:text="+" />
+
+        <Button
+            android:id="@+id/btn_TimerDown"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:text="-" />
 
     </LinearLayout>
 

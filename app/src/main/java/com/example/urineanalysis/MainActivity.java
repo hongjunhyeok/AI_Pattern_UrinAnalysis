@@ -8,6 +8,7 @@ import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Environment;
 import android.os.Handler;
+import android.os.Message;
 import android.support.annotation.NonNull;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
@@ -46,6 +47,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
+import java.sql.Time;
+import java.text.MessageFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -69,6 +72,11 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     private static final int VIEW_MODE_STOP = 3;
     private static final int VIEW_MODE_INIT = 4;
     private static final int VIEW_MODE_CHECK =5;
+
+    private static final int MESSAGE_TIMER_START=100;
+    private static final int MESSAGE_TIMER_REPEAT=101;
+    private static final int MESSAGE_TIMER_STOP=102;
+
     private int mViewMode;
 
 
@@ -84,6 +92,8 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
 
     // RGB detect
+
+    public int Timer=600;
     double RGB[][] = new double[4][3];
     double RGB1[]=new double[3];
     double RGB2[]=new double[3];
@@ -143,6 +153,9 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
         Button bt=(Button)findViewById(R.id.button1);
         Button bt2=(Button)findViewById(R.id.button2);
+        Button bt_stop=(Button)findViewById(R.id.btn_TimerStop);
+        Button bt_up=findViewById(R.id.btn_TimerUp);
+        Button bt_dn=findViewById(R.id.btn_TimerDown);
 
         final TextView tx1=(TextView)findViewById(R.id.text1);
         final TextView tx2=(TextView)findViewById(R.id.text2);
@@ -172,10 +185,32 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
             public void onClick(View view) {
                 mViewMode=VIEW_MODE_START;
 
-                Handler handler=new Handler();
-                for(int s=0;s<6;s++){
-                    handler.postDelayed(fileRunnable,10000*(s+1));
-                }
+                TimerHandler timerHandler=new TimerHandler();
+                timerHandler.sendEmptyMessage(MESSAGE_TIMER_START);
+            }
+        });
+        bt_stop.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                mViewMode=VIEW_MODE_START;
+
+                TimerHandler timerHandler=new TimerHandler();
+                timerHandler.sendEmptyMessage(MESSAGE_TIMER_STOP);
+            }
+        });
+        bt_up.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Timer+=100;
+                Toast.makeText(getApplicationContext(),String.format("Timer :%d second",Timer),Toast.LENGTH_SHORT).show();
+            }
+        });
+        bt_dn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Timer-=100;
+                Toast.makeText(getApplicationContext(),String.format("Timer :%d second",Timer),Toast.LENGTH_SHORT).show();
+
             }
         });
         bt.setOnClickListener(new View.OnClickListener() {
@@ -701,7 +736,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         msg_hue="";
         msg_bilirubin="";
 
-        String msg_r,msg_b,msg_g;
+        String msg_r,msg_b,msg_g,msg_locationXY;
 
         CalculateHue calculateHue=new CalculateHue();
         double hue_bili=calculateHue.getH(rgbV_BILIRUBIN);
@@ -714,6 +749,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         msg_r=String.format("R: %.1f",rgbV_BILIRUBIN[0]);
         msg_g=String.format("G: %.1f",rgbV_BILIRUBIN[1]);
         msg_b=String.format("B: %.1f",rgbV_BILIRUBIN[2]);
+        msg_locationXY=String.format("X : %d,Y: %d",(int)p[2].x,(int)p[2].y);
 
         msg_hue=String.format("H: %.2f",hue_bili);
 
@@ -735,6 +771,8 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
             writer.append(msg_bilis);
             writer.append("\r\n");
+            writer.append(msg_locationXY);
+            writer.append("\r\n");
             writer.append(msg_r);
             writer.append("\r\n");
             writer.append(msg_g);
@@ -746,6 +784,9 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
             writer.flush();;
             writer.close();
+
+
+            Toast.makeText(getApplicationContext(),"Saved",Toast.LENGTH_SHORT);
         } catch (IOException e) {
         }
     }
@@ -800,4 +841,38 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 //        }
 
     }
+    private class TimerHandler extends Handler{
+        int count =0;
+        @Override
+        public void handleMessage(Message msg){
+            switch (msg.what){
+                case MESSAGE_TIMER_START:
+                    count=0;
+                    this.removeMessages(MESSAGE_TIMER_REPEAT);
+                    this.sendEmptyMessage(MESSAGE_TIMER_REPEAT);
+                    break;
+
+                case MESSAGE_TIMER_REPEAT:
+                    if(count < Timer) {
+                        this.postDelayed(fileRunnable, 1000);
+                        count+=10;
+                    }
+                    this.sendEmptyMessageDelayed(MESSAGE_TIMER_REPEAT,1000);
+                    TextView tv3=findViewById(R.id.text3);
+
+                    int time=Timer;
+                    time--;
+                    tv3.setText(time);
+
+                    break;
+
+                case MESSAGE_TIMER_STOP:
+                    this.removeMessages(MESSAGE_TIMER_REPEAT);
+                    break;
+            }
+        }
+
+    }
+
 }
+
