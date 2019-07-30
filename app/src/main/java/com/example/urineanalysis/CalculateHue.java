@@ -2,6 +2,8 @@ package com.example.urineanalysis;
 
 import android.util.Log;
 
+import org.opencv.core.Point;
+
 import java.util.HashMap;
 
 /**
@@ -115,5 +117,6 @@ public class CalculateHue {
 
         return ab;
     }
+
 
 }
