@@ -78,6 +78,10 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     private static final int MESSAGE_TIMER_STOP=102;
 
     private int mViewMode;
+    TextView tx1;
+    TextView tx2;
+    TextView tx3;
+    TextView tx4;
 
 
     // used to fix camera orientation from 270 degree to 0 degree
@@ -94,6 +98,9 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     // RGB detect
 
     public int Timer=600;
+    public int time=0;
+    int count =0;
+
     double RGB[][] = new double[4][3];
     double RGB1[]=new double[3];
     double RGB2[]=new double[3];
@@ -140,6 +147,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
     String msg_rgb;
     String msg_hue,msg_bilirubin;
+    TimerHandler timerHandler=new TimerHandler();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -157,10 +165,10 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         Button bt_up=findViewById(R.id.btn_TimerUp);
         Button bt_dn=findViewById(R.id.btn_TimerDown);
 
-        final TextView tx1=(TextView)findViewById(R.id.text1);
-        final TextView tx2=(TextView)findViewById(R.id.text2);
-        final TextView tx3=(TextView)findViewById(R.id.text3);
-        final TextView tx4=(TextView)findViewById(R.id.text4);
+        tx1=(TextView)findViewById(R.id.text1);
+        tx2=(TextView)findViewById(R.id.text2);
+        tx3=(TextView)findViewById(R.id.text3);
+        tx4=(TextView)findViewById(R.id.text4);
 
         String result;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -180,21 +188,26 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
 
         drawPoint();
-        bt2.setOnClickListener(new View.OnClickListener() {
+
+        bt.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 mViewMode=VIEW_MODE_START;
 
-                TimerHandler timerHandler=new TimerHandler();
                 timerHandler.sendEmptyMessage(MESSAGE_TIMER_START);
+
+                Handler handler= new Handler();
+                handler.postDelayed(fileRunnable,5000);
+                Timer+=10;
+
             }
         });
+
         bt_stop.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 mViewMode=VIEW_MODE_START;
 
-                TimerHandler timerHandler=new TimerHandler();
                 timerHandler.sendEmptyMessage(MESSAGE_TIMER_STOP);
             }
         });
@@ -202,6 +215,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
             @Override
             public void onClick(View view) {
                 Timer+=100;
+                time=Timer;
                 Toast.makeText(getApplicationContext(),String.format("Timer :%d second",Timer),Toast.LENGTH_SHORT).show();
             }
         });
@@ -209,11 +223,12 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
             @Override
             public void onClick(View view) {
                 Timer-=100;
+                time=Timer;
                 Toast.makeText(getApplicationContext(),String.format("Timer :%d second",Timer),Toast.LENGTH_SHORT).show();
 
             }
         });
-        bt.setOnClickListener(new View.OnClickListener() {
+        bt2.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 mViewMode=VIEW_MODE_START;
@@ -289,14 +304,15 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     Runnable fileRunnable =new Runnable() {
         @Override
         public void run() {
-
             writeToFile();
 
-                TextView tx1=findViewById(R.id.text1);
-
-                tx1.setText(msg_rgb+msg_hue);
-
-
+        }
+    };
+    Runnable timerRunnable =new Runnable() {
+        @Override
+        public void run() {
+            time--;
+            tx3.setText(Integer.toString(time));
         }
     };
 
@@ -686,6 +702,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
                 double x= middlex+   (Math.cos(angle)*bilirubin_p[i].x-Math.sin(angle)*bilirubin_p[i].y)*ratio;
                 double y= middley+   (Math.sin(angle)*bilirubin_p[i].x+Math.cos(angle)*bilirubin_p[i].y)*ratio;
 
+
                 rgbV_bilirubins[i]=mRgba.get((int)y,(int)x);
                 Imgproc.circle(mRgba,new Point(x,y),(int)(10*ratio),new Scalar(255,255,255));
             }
@@ -841,33 +858,37 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 //        }
 
     }
+
     private class TimerHandler extends Handler{
-        int count =0;
         @Override
         public void handleMessage(Message msg){
             switch (msg.what){
                 case MESSAGE_TIMER_START:
-                    count=0;
+
+
                     this.removeMessages(MESSAGE_TIMER_REPEAT);
                     this.sendEmptyMessage(MESSAGE_TIMER_REPEAT);
                     break;
 
                 case MESSAGE_TIMER_REPEAT:
-                    if(count < Timer) {
-                        this.postDelayed(fileRunnable, 1000);
-                        count+=10;
-                    }
-                    this.sendEmptyMessageDelayed(MESSAGE_TIMER_REPEAT,1000);
-                    TextView tv3=findViewById(R.id.text3);
 
-                    int time=Timer;
-                    time--;
-                    tv3.setText(time);
+                    if(count>Timer){
+                        tx1.setText("save Finished");
+
+                    }else {
+                        writeToFile();
+                        tx1.setText("save remained : " + Integer.toString((Timer - count) / 10));
+                        count += 10;
+                    }
+                    this.sendEmptyMessageDelayed(MESSAGE_TIMER_REPEAT,10000);
 
                     break;
 
                 case MESSAGE_TIMER_STOP:
+                    Toast.makeText(getApplicationContext(),"Timer Stoped",Toast.LENGTH_SHORT).show();
+
                     this.removeMessages(MESSAGE_TIMER_REPEAT);
+                    this.removeCallbacks(fileRunnable);
                     break;
             }
         }

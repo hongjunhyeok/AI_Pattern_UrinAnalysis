@@ -45,6 +45,7 @@
             android:layout_weight="1"
             android:text="Detect" />
 
+
         <TextView
             android:id="@+id/text1"
             android:layout_width="match_parent"
