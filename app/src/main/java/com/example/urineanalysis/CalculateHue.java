@@ -96,8 +96,6 @@ public class CalculateHue {
             }
         }
         return index;
-
-
     }
 
 
@@ -124,6 +122,9 @@ public class CalculateHue {
 
         return ab;
     }
+
+
+
 
 
 }
