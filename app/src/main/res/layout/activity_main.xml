@@ -23,30 +23,27 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_weight="1"
-        android:orientation="vertical">
-
+        android:orientation="horizontal">
         <LinearLayout
-            android:layout_weight="2"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="horizontal"></LinearLayout>
+            android:orientation="horizontal"
+            android:layout_width="100dp"
+            android:padding="10dp"
+            android:layout_height="match_parent">
+
+
+        </LinearLayout>
+
 
         <org.opencv.android.JavaCameraView
-            android:layout_weight="1"
 
             android:id="@+id/activity_surface_view"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+            android:padding="100dp"
             opencv:camera_id="any"
-            opencv:show_fps="true"
+            opencv:show_fps="true" />
 
-            />
 
-        <LinearLayout
-            android:layout_weight="2"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="horizontal"></LinearLayout>
     </LinearLayout>
 
     <LinearLayout

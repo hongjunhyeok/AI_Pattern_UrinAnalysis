@@ -15,7 +15,6 @@ import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.MenuItem;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.Window;
@@ -37,18 +36,12 @@ import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 import org.opencv.objdetect.CascadeClassifier;
-import org.w3c.dom.Text;
 
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStreamWriter;
-import java.sql.Time;
-import java.text.MessageFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -60,18 +53,8 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     private static final String TAG = "opencv_TAG"; // for loggin success or failure messages
     // load camera view of opencv, this let us see using opencv
     private CameraBridgeViewBase mOpenCvCameraView;
-
-
-    // used in camera selection from menu
-    private boolean mIsJavaCamera = true;
-    private MenuItem mItemSwitchCamera = null;
-
-    private static final int VIEW_MODE_RGBA = 0;
     private static final int VIEW_MODE_START = 1;
-    private static final int VIEW_MODE_RESULT = 2;
-    private static final int VIEW_MODE_STOP = 3;
     private static final int VIEW_MODE_INIT = 4;
-    private static final int VIEW_MODE_CHECK = 5;
 
     private static final int MESSAGE_TIMER_START = 100;
     private static final int MESSAGE_TIMER_REPEAT = 101;
@@ -85,14 +68,12 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
 
     // used to fix camera orientation from 270 degree to 0 degree
-    Mat mRgba, mGray, cropped_img;
+    Mat mRgba, mGray;
     Mat mRgbaF;
     Mat mRgbaT;
     int cropped_x = 0, cropped_y = 0, cropped_w = 1280, cropped_h = 760;
-    long mRgba_Hue;
 
-    private File mCascadeFile, mModelFile2, mModelFile3, mModelFile4;
-    private CascadeClassifier mJavaDetector, mJavaDetector2, mJavaDetector3, mJavaDetector4;
+    private CascadeClassifier mJavaDetector;
 
 
     // RGB detect
@@ -101,35 +82,14 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     public int time = 0;
     int count = 0;
 
-
-    double[] rgb_reference = new double[3];
-    double RGB[][] = new double[4][3];
-    double RGB1[] = new double[3];
-    double RGB2[] = new double[3];
-
-
-    double RGB3[] = new double[3];
-    double RGB4[] = new double[3];
-    // HSV detect
-    double HSV[][] = new double[4][3];
-    double HSV_[][] = new double[4][3]; // 정규화된 HSV
-
-//    private CascadeClassifier mJavaDetector2;
-//    private CascadeClassifier mJavaDetector3;
-//    private CascadeClassifier mJavaDetector4;
-
-
     //{{{{do process
     Point p[] = new Point[5];
-    Point[] gloucose_p = new Point[6];
-    Point[] protein_p = new Point[6];
+//    Point[] gloucose_p = new Point[6];
+//    Point[] protein_p = new Point[6];
     Point[] bilirubin_p = new Point[4];
-    Point[] urobilinogen_p = new Point[4];
+//    Point[] urobilinogen_p = new Point[4];
 
-    double[] RGB_value = new double[3];
-    double[] RGB_value2 = new double[3];
-    double[] RGB_value3 = new double[3];
-    double[] RGB_value4 = new double[3];
+
 
     double[] rgbV_GLOUCOSE = new double[3];
     double[] rgbV_PROTEIN = new double[3];
@@ -144,15 +104,14 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     double hue_bili=0;
     double[] hue_bilis = new double[4];
     ArrayList<Double>hue_avg=new ArrayList<>();
+    ArrayList<String> strR=new ArrayList<>();
+    ArrayList<String> strG=new ArrayList<>();
+    ArrayList<String> strB=new ArrayList<>();
+    ArrayList<String> strH=new ArrayList<>();
 
 //}}}}
 
-    double calcul_H[][] = new double[4][3]; //  4개의 영역에 대한 H 값 -> 깃허브수식사용
     Rect[] bubble_array;
-    Rect[] array2;
-    Rect[] array3;
-    Rect[] array4;
-
     String msg_rgb;
     String msg_hue, msg_bilirubin;
     TimerHandler timerHandler = new TimerHandler();
@@ -163,32 +122,32 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
 
         requestWindowFeature(Window.FEATURE_NO_TITLE);
-        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
-        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
+                WindowManager.LayoutParams.FLAG_FULLSCREEN);
         setContentView(R.layout.activity_main);
 
-        Button bt = (Button) findViewById(R.id.button1);
-        Button bt2 = (Button) findViewById(R.id.button2);
-        Button bt_stop = (Button) findViewById(R.id.btn_TimerStop);
+        Button bt = findViewById(R.id.button1);
+        Button bt2 = findViewById(R.id.button2);
+        Button bt_stop =findViewById(R.id.btn_TimerStop);
         Button bt_up = findViewById(R.id.btn_TimerUp);
         Button bt_dn = findViewById(R.id.btn_TimerDown);
 
-        tx1 = (TextView) findViewById(R.id.text1);
-        tx2 = (TextView) findViewById(R.id.text2);
-        tx3 = (TextView) findViewById(R.id.text3);
-        tx4 = (TextView) findViewById(R.id.text4);
+        tx1 =findViewById(R.id.text1);
+        tx2 = findViewById(R.id.text2);
+        tx3 = findViewById(R.id.text3);
+        tx4 = findViewById(R.id.text4);
 
-        String result;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+
+
             //퍼미션 상태 확인
-            if (!hasPermissions(PERMISSIONS)) {
+        if (!hasPermissions(PERMISSIONS)) {
 
                 //퍼미션 허가 안되어있다면 사용자에게 요청
                 requestPermissions(PERMISSIONS, PERMISSIONS_REQUEST_CODE);
             }
-        }
 
-        mOpenCvCameraView = (CameraBridgeViewBase) findViewById(R.id.activity_surface_view);
+
+        mOpenCvCameraView =findViewById(R.id.activity_surface_view);
         mOpenCvCameraView.setVisibility(SurfaceView.VISIBLE);
         mOpenCvCameraView.setCvCameraViewListener(this);
         mOpenCvCameraView.setCameraIndex(1); // front-camera(1),  back-camera(0)
@@ -204,8 +163,6 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
                 timerHandler.sendEmptyMessage(MESSAGE_TIMER_START);
 
-                Handler handler = new Handler();
-                handler.postDelayed(fileRunnable, 5000);
                 Timer += 10;
 
             }
@@ -216,6 +173,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
             public void onClick(View view) {
                 mViewMode = VIEW_MODE_START;
 
+                writeToFileAll();
                 timerHandler.sendEmptyMessage(MESSAGE_TIMER_STOP);
             }
         });
@@ -224,7 +182,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
             public void onClick(View view) {
                 Timer += 100;
                 time = Timer;
-                Toast.makeText(getApplicationContext(), String.format("Timer :%d second", Timer), Toast.LENGTH_SHORT).show();
+                Toast.makeText(getApplicationContext(), String.format(Locale.KOREA,"Timer :%d second", Timer), Toast.LENGTH_SHORT).show();
             }
         });
         bt_dn.setOnClickListener(new View.OnClickListener() {
@@ -232,7 +190,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
             public void onClick(View view) {
                 Timer -= 100;
                 time = Timer;
-                Toast.makeText(getApplicationContext(), String.format("Timer :%d second", Timer), Toast.LENGTH_SHORT).show();
+                Toast.makeText(getApplicationContext(), String.format(Locale.KOREA,"Timer :%d second", Timer), Toast.LENGTH_SHORT).show();
 
             }
         });
@@ -241,22 +199,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
             public void onClick(View v) {
                 mViewMode = VIEW_MODE_START;
 
-                try {
-                    String text1 = "R: " + Double.toString(RGB_value[0]) + "G: " + Double.toString(RGB_value[1]) + "B: " + Double.toString(RGB_value[2]);
-                    tx1.setText(text1);
 
-                    String text2 = "R: " + Double.toString(RGB_value2[0]) + "G: " + Double.toString(RGB_value2[1]) + "B: " + Double.toString(RGB_value2[2]);
-                    tx2.setText(text2);
-
-                    String text3 = "R: " + Double.toString(RGB_value3[0]) + "G: " + Double.toString(RGB_value3[1]) + "B: " + Double.toString(RGB_value3[2]);
-                    tx3.setText(text3);
-
-                    String text4 = "R: " + Double.toString(RGB_value4[0]) + "G: " + Double.toString(RGB_value4[1]) + "B: " + Double.toString(RGB_value4[2]);
-                    tx4.setText(text4);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    Toast.makeText(getApplication(), e.toString(), Toast.LENGTH_SHORT).show();
-                }
 
                 CalculateHue calculateHue = new CalculateHue();
                 double hue_bilirubin = calculateHue.getH(rgbV_BILIRUBIN);
@@ -270,6 +213,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
                 HashMap<String, Double> trendline = null;
                 trendline = calculateHue.getTrendLine(x_bilirubin, y_bilirubin);
 
+
                 double incline = trendline.get("a");
                 double intercept = trendline.get("b");
 
@@ -277,48 +221,28 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
                 Intent i = new Intent(getApplicationContext(), Chart.class);
                 i.putExtra("hue", hue_bilirubin);
                 i.putExtra("index", rst);
-//                tx1.setText("rst : "+Double.toString(rst));
-//                startActivity(i);
-
 
                 msg_rgb = "";
                 msg_hue = "";
                 String msg_Equation;
 
-                msg_rgb = String.format("R : %.1f\nG: %.1f\nB: %.1f\n", rgbV_BILIRUBIN[0], rgbV_BILIRUBIN[1], rgbV_BILIRUBIN[2]);
-                msg_hue = String.format("H: %.2f", hue_bilirubin);
+                msg_rgb = String.format(Locale.KOREA,"R : %.1f\nG: %.1f\nB: %.1f\n", rgbV_BILIRUBIN[0], rgbV_BILIRUBIN[1], rgbV_BILIRUBIN[2]);
+                msg_hue = String.format(Locale.KOREA,"H: %.2f", hue_bilirubin);
 
 
                 if (intercept < 0) {
-                    msg_Equation = "y=" + Double.toString(Double.parseDouble(String.format("%.2f", incline)))
-                            + "x" + Double.toString(Double.parseDouble(String.format("%.2f", intercept)));
+                    msg_Equation = "y=" + (Double.parseDouble(String.format(Locale.KOREA,"%.2f", incline)))
+                            + "x" +(Double.parseDouble(String.format(Locale.KOREA,"%.2f", intercept)));
                 } else {
-                    msg_Equation = "y=" + Double.toString(Double.parseDouble(String.format("%.2f", incline)))
-                            + "x+" + Double.toString(Double.parseDouble(String.format("%.2f", intercept)));
+                    msg_Equation = "y=" + (Double.parseDouble(String.format(Locale.KOREA,"%.2f", incline)))
+                            + "x+" + (Double.parseDouble(String.format(Locale.KOREA,"%.2f", intercept)));
                 }
                 tx2.setText(msg_Equation);
-
 
             }
         });
 
-
     }
-
-    Runnable fileRunnable = new Runnable() {
-        @Override
-        public void run() {
-            writeToFile();
-
-        }
-    };
-    Runnable timerRunnable = new Runnable() {
-        @Override
-        public void run() {
-            time--;
-            tx3.setText(Integer.toString(time));
-        }
-    };
 
 
     @Override
@@ -354,6 +278,10 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         mRgbaF = new Mat(height, width, CvType.CV_8UC4);
         mRgbaT = new Mat(width, width, CvType.CV_8UC4);
 
+
+        cropped_w=mRgba.width();
+        cropped_h=mRgba.height();
+
     }
 
 
@@ -374,9 +302,6 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         switch (viewMode) {
             case VIEW_MODE_START:
                 MatOfRect bubble_rect = new MatOfRect();
-                MatOfRect rect2 = new MatOfRect();
-                MatOfRect rect3 = new MatOfRect();
-                MatOfRect rect4 = new MatOfRect();
 
 
 //        Point t1= new Point(cropped_x,cropped_y);
@@ -390,14 +315,11 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
                 bubble_array = bubble_rect.toArray();
 
 
-                double corner1_circle_center_x = 0;
-                double corner1_circle_center_y = 0;
                 for (int k = 0; k < bubble_array.length; k++) {
                     Imgproc.rectangle(mRgba,
                             new Point(bubble_array[k].tl().x, bubble_array[k].tl().y),
                             new Point(bubble_array[k].br().x, bubble_array[k].br().y),
                             new Scalar(255, 0, 0));
-
                 }
 
                 try {
@@ -430,66 +352,38 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
                     Log.i(TAG, "OpenCV loaded successfully");
 
                     try {
-                        InputStream is = getResources().openRawResource(R.raw.cascade00);
-                        InputStream is_man = getResources().openRawResource(R.raw.cascade00);
-                        InputStream is_3 = getResources().openRawResource(R.raw.cascade_octstar);
-                        InputStream is_4 = getResources().openRawResource(R.raw.cascade2);
+                        InputStream is = getResources().openRawResource(R.raw.cascade_circle);
+
 
 //                        scaleFactor=1.11;minNeighbors=5;
 //                        mN1=10; mN2=5; mN3=10;
 
+                        File mCascadeFile, mModelFile2, mModelFile3, mModelFile4;
 
                         File cascadeDir = getDir("cascade", Context.MODE_PRIVATE);
-                        File manisDir = getDir("cascade", Context.MODE_PRIVATE);
-                        File model3Dir = getDir("cascade", Context.MODE_PRIVATE);
-                        File model4Dir = getDir("cascade", Context.MODE_PRIVATE);
+
 
                         mCascadeFile = new File(cascadeDir, "cascade_in.xml");
-                        mModelFile2 = new File(manisDir, "cascade_out4.xml");
-                        mModelFile3 = new File(model3Dir, "cascade_empty_6.xml");
-                        mModelFile4 = new File(model3Dir, "cascade_empty_7.xml");
+
 
                         FileOutputStream os = new FileOutputStream(mCascadeFile);
-                        FileOutputStream os_mains = new FileOutputStream(mModelFile2);
-                        FileOutputStream os_3 = new FileOutputStream(mModelFile3);
-                        FileOutputStream os_4 = new FileOutputStream(mModelFile4);
+
 
 //                        FileOutputStream os_mains = new FileOutputStream(mModelFile2);
 //                        FileOutputStream os_3=new FileOutputStream(mModelFile3);
                         byte[] buffer = new byte[4096];
-                        byte[] buffer2 = new byte[4096];
-                        byte[] buf3 = new byte[4096];
 
-                        byte[] buf4 = new byte[4096];
-                        int bytesRead, bytesRead2, bytesRead3, bytesRead4;
+                        int bytesRead;
                         while ((bytesRead = is.read(buffer)) != -1) {
                             os.write(buffer, 0, bytesRead);
                         }
-                        while ((bytesRead2 = is_man.read(buffer2)) != -1) {
-                            os_mains.write(buffer2, 0, bytesRead2);
-                        }
-                        while ((bytesRead3 = is_3.read(buf3)) != -1) {
-                            os_3.write(buf3, 0, bytesRead3);
-                        }
-                        while ((bytesRead4 = is_4.read(buf4)) != -1) {
-                            os_4.write(buf4, 0, bytesRead4);
-                        }
+
 
                         is.close();
-                        is_man.close();
-                        is_3.close();
-                        is_4.close();
-                        os.close();
-                        os_mains.close();
-                        os_3.close();
-                        os_4.close();
-                        mJavaDetector = new CascadeClassifier(mCascadeFile.getAbsolutePath());
-                        mJavaDetector2 = new CascadeClassifier(mModelFile2.getAbsolutePath());
-                        mJavaDetector3 = new CascadeClassifier(mModelFile3.getAbsolutePath());
-                        mJavaDetector4 = new CascadeClassifier(mModelFile4.getAbsolutePath());
 
-                        cascadeDir.delete();
-                        manisDir.delete();
+                        os.close();
+
+                        mJavaDetector = new CascadeClassifier(mCascadeFile.getAbsolutePath());
 
                     } catch (IOException e) {
                         e.printStackTrace();
@@ -689,6 +583,8 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
                 double y = middley + (Math.sin(angle) * p[i].x + Math.cos(angle) * p[i].y) * ratio;
 
                 Imgproc.circle(mRgba, new Point(x, y), (int) (10), new Scalar(255, 255, 255));
+                Imgproc.circle(mRgba, new Point(x, y), (int) (10), new Scalar(255, 255, 255));
+
                 if(i==0){
                     rgbV_GLOUCOSE = average_RGB((int) p[2].y, (int) p[2].x);
 
@@ -703,7 +599,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
                 }
                 if(i==3){
-                    rgbV_UROBILINOGEN = average_RGB((int) p[2].y, (int) p[2].x);
+                    rgbV_UROBILINOGEN = average_RGB((int)x, (int)y);
 
                 }
                 if (i == 4) {
@@ -732,15 +628,14 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
             Imgproc.putText(mRgba, "2", new Point(sorted_x[2], sorted_y[2]), 1, 3, new Scalar(255, 0, 0), 2);
             Imgproc.putText(mRgba, "3", new Point(sorted_x[3], sorted_y[3]), 1, 3, new Scalar(255, 0, 0), 2);
 
-            Imgproc.putText(mRgba, String.format("height : %.2f", 10 * (290 / distance)), new Point(0, 100), 1, 2, new Scalar(255, 0, 0), 2);
-            Imgproc.putText(mRgba, String.format("angle : %.2f", angle), new Point(0, 200), 1, 2, new Scalar(255, 0, 0), 2);
+            Imgproc.putText(mRgba, String.format(Locale.KOREA,"height : %.2f", 10 * (290 / distance)), new Point(0, 100), 1, 2, new Scalar(255, 0, 0), 2);
+            Imgproc.putText(mRgba, String.format(Locale.KOREA,"angle : %.2f", angle), new Point(0, 200), 1, 2, new Scalar(255, 0, 0), 2);
 //            Imgproc.putText(mRgba, String.format("hue : %.2f", calculateHue.getH(rgbV_BILIRUBIN)), new Point(0, 200), 1, 2, new Scalar(255, 0, 0), 2);
 //            Imgproc.putText(mRgba, String.format("rgb : %.2f %.2f %.2f",rgbV_BILIRUBIN[0],rgbV_BILIRUBIN[1],rgbV_BILIRUBIN[2]), new Point(0, 300), 1, 2, new Scalar(255, 0, 0), 2);
 
 
 
-            hue_bili = calculateHue.getH(rgbV_BILIRUBIN);
-            hue_bilis = new double[4];
+            hue_bili = calculateHue.getH(rgbV_UROBILINOGEN);
             hue_avg.add(hue_bili);
             if(hue_avg.size()>1000){
                 hue_avg.clear();
@@ -762,45 +657,32 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     }
 
 
-    private void writeToFile() {
+    private void writeToFileAll() {
 
         long now = System.currentTimeMillis(); // 현재시간 받아오기
         Date date = new Date(now); // Date 객체 생성
-        SimpleDateFormat sdf = new SimpleDateFormat("MM-dd HH:mm:ss");
+        SimpleDateFormat sdf = new SimpleDateFormat("MM-dd HH:mm:ss",Locale.KOREA);
         String nowTime = sdf.format(date);
 
-        msg_rgb = "";
-        msg_hue = "";
-        msg_bilirubin = "";
 
-        double rst_bili=0;
 
-        for(int i=0;i<hue_avg.size();i++){
-             rst_bili+=hue_avg.get(i);
+       String msgR="R: ",msgG="G: ",msgB="B: ",msgH="H: ";
+
+//       for(int i=0;i<strR.size();i++){
+//           msgR+=strR.get(i);
+//       }
+//        for(int i=0;i<strG.size();i++){
+//            msgG+=strG.get(i);
+//        }
+//        for(int i=0;i<strB.size();i++){
+//            msgB+=strB.get(i);
+//        }
+        for(int i=0;i<strH.size();i++){
+            msgH+=strH.get(i);
         }
-        rst_bili=rst_bili/hue_avg.size();
-        hue_avg.clear();
-
-        String msg_r, msg_b, msg_g, msg_locationXY;
-        CalculateHue calculateHue = new CalculateHue();
-
-
-        for (int i = 0; i < 4; i++) {
-            hue_bilis[i] = calculateHue.getH(rgbV_bilirubins[i]);
-        }
-
-        msg_r = String.format("%.1f", rgbV_BILIRUBIN[0]);
-        msg_g = String.format("%.1f", rgbV_BILIRUBIN[1]);
-        msg_b = String.format("%.1f", rgbV_BILIRUBIN[2]);
-
-        msg_hue = String.format("%.2f", rst_bili);
-
-        msg_rgb = String.format("Color Band Neg : %.1f\t1+: %.1f\t2+: %.1f\t 3+: %.1f", hue_bilis[0], hue_bilis[1], hue_bilis[2], hue_bilis[3]);
-        String msg_bilis = String.format("Color Band// Neg :%.1f\t1+: %.1f\t2+: %.1f\t3+: %.1f", hue_bilis[0], hue_bilis[1], hue_bilis[2], hue_bilis[3]);
-
 
         try {
-            File file = new File(Environment.getExternalStorageDirectory() + "/UrineCup");
+            File file = new File(Environment.getExternalStorageDirectory() + "/OneFileUrineCup");
             if (!file.exists()) {
                 file.mkdir();
             }
@@ -813,13 +695,13 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 //            writer.append(msg_bilis);
 //            writer.append("\r\n");
 
-            writer.append(msg_r);
-            writer.append("\r\n");
-            writer.append(msg_g);
-            writer.append("\r\n");
-            writer.append(msg_b);
-            writer.append("\r\n");
-            writer.append(msg_hue);
+//            writer.append(msgR);
+//            writer.append("\r\n");
+//            writer.append(msgG);
+//            writer.append("\r\n");
+//            writer.append(msgB);
+//            writer.append("\r\n");
+            writer.append(msgH);
             writer.append("\r\n");
 
             writer.flush();
@@ -827,19 +709,20 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
             writer.close();
 
 
-            Toast.makeText(getApplicationContext(), "Saved", Toast.LENGTH_SHORT);
+            strR.clear();
+            strG.clear();
+            strB.clear();
+            strH.clear();
+
         } catch (IOException e) {
+            e.printStackTrace();
         }
     }
-
     void drawPoint() {
-
-
         int size = 43;
         for (int i = 0; i <= 4; i++) {
             if (i == 0) {
                 p[0] = new Point(-size, -size);
-
             }
             if (i == 1) {
                 p[i] = new Point(size, -size);
@@ -850,12 +733,11 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
             if (i == 3) {
                 p[i] = new Point(-size, size);
             }
-
             if (i == 4) {
                 p[i] = new Point(0, 0);
             }
         }
-//
+
 //
 //        for(int i=0;i<6;i++){
 //            gloucose_p[i]=new Point(-size,-240+45*i);
@@ -887,6 +769,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 //        }
 
     }
+    int countflag=0;
 
     private class TimerHandler extends Handler {
         @Override
@@ -903,21 +786,61 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
                     if (count > Timer) {
                         tx1.setText("save Finished");
+                        this.sendEmptyMessageDelayed(MESSAGE_TIMER_STOP, 1000);
 
                     } else {
-                        writeToFile();
+//                        writeToFile();
+
+                        msg_rgb = "";
+                        msg_hue = "";
+                        msg_bilirubin = "";
+
+                        double rst_bili=0;
+
+                        for(int i=0;i<hue_avg.size();i++){
+                            rst_bili+=hue_avg.get(i);
+                        }
+                        rst_bili=rst_bili/hue_avg.size();
+
+                        hue_avg.clear();
+
+
+//                        strR.add(String.format(Locale.KOREA,"%.1f ", rgbV_UROBILINOGEN[0]));
+//                        strG.add(String.format(Locale.KOREA,"%.1f ", rgbV_UROBILINOGEN[1]));
+//                        strB.add(String.format(Locale.KOREA,"%.1f ", rgbV_UROBILINOGEN[2]));
+                        strH.add(String.format(Locale.KOREA,"%.3f ", rst_bili));
+
+
                         tx1.setText("save remained : " + Integer.toString((Timer - count) / 10));
                         count += 10;
                     }
-                    this.sendEmptyMessageDelayed(MESSAGE_TIMER_REPEAT, 10000);
+
+
+                    if(countflag==0){
+                        countflag++;
+
+
+                        this.sendEmptyMessageDelayed(MESSAGE_TIMER_REPEAT, 5000);
+
+                    }
+
+                    else {
+                        this.sendEmptyMessageDelayed(MESSAGE_TIMER_REPEAT, 10000);
+                    }
 
                     break;
 
                 case MESSAGE_TIMER_STOP:
                     Toast.makeText(getApplicationContext(), "Timer Stoped", Toast.LENGTH_SHORT).show();
 
+                    countflag=0;
+                    msg_rgb = "";
+                    msg_hue = "";
+                    msg_bilirubin = "";
+                    hue_avg.clear();
+
+
                     this.removeMessages(MESSAGE_TIMER_REPEAT);
-                    this.removeCallbacks(fileRunnable);
                     break;
             }
         }
@@ -941,16 +864,15 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
                 tmpG += rgbV[1];
                 tmpB += rgbV[2];
             }
-
-            tmpR = tmpR / 25;
-            tmpG = tmpG / 25;
-            tmpB = tmpB / 25;
-
-            avgRGB[0] = tmpR;
-            avgRGB[1] = tmpG;
-            avgRGB[2] = tmpB;
-
         }
+
+        tmpR = tmpR / 25;
+        tmpG = tmpG / 25;
+        tmpB = tmpB / 25;
+
+        avgRGB[0] = tmpR;
+        avgRGB[1] = tmpG;
+        avgRGB[2] = tmpB;
 
         return avgRGB;
 
