@@ -1,4 +1,4 @@
-package com.example.urineanalysis;
+package com.example.urineanalysis.utils;
 
 import android.util.Log;
 
@@ -15,13 +15,20 @@ public class CalculateHue {
 
     //R = r*100 / r+g+b , G = g*100 / r+g+b, B = b*100 / r+g+b
     private double[] getLargeRGB(double[] value){
-        double H=0.0;
-        // index 0 1 2  : R G B
-        double[] LargeRGB =new double[3];
-        double sum=value[0]+value[1]+value[2];
-        LargeRGB[0]=value[0]*100/sum;
-        LargeRGB[1]=value[1]*100/sum;
-        LargeRGB[2]=value[2]*100/sum;
+
+
+
+            double H = 0.0;
+            // index 0 1 2  : R G B
+            double[] LargeRGB = new double[3];
+        try {
+            double sum = value[0] + value[1] + value[2];
+            LargeRGB[0] = value[0] * 100 / sum;
+            LargeRGB[1] = value[1] * 100 / sum;
+            LargeRGB[2] = value[2] * 100 / sum;
+        }catch(Exception e){
+            e.printStackTrace();
+        }
 
         return LargeRGB;
     };
@@ -89,8 +96,6 @@ public class CalculateHue {
             }
         }
         return index;
-
-
     }
 
 
@@ -117,6 +122,9 @@ public class CalculateHue {
 
         return ab;
     }
+
+
+
 
 
 }

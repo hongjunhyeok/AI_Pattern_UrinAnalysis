@@ -1,4 +1,4 @@
-package com.example.urineanalysis;
+package com.example.urineanalysis.utils;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -10,6 +10,10 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 
 
+import com.example.urineanalysis.AnalysisActivity;
+import com.example.urineanalysis.MainActivity;
+import com.example.urineanalysis.R;
+
 import org.achartengine.ChartFactory;
 import org.achartengine.GraphicalView;
 import org.achartengine.chart.PointStyle;
@@ -18,18 +22,23 @@ import org.achartengine.model.XYSeries;
 import org.achartengine.renderer.XYMultipleSeriesRenderer;
 import org.achartengine.renderer.XYSeriesRenderer;
 
+import java.util.ArrayList;
+
 
 /**
  * Created by ygyg331 on 2018-06-28.
  */
 public class Chart extends Activity {
 
-    private static final String TAG = "opencv_TAG"; // for loggin success or failure messages
+    private static final String TAG = "Chart _TAG"; // for loggin success or failure messages
+    Intent get = getIntent();
+
 
     Button btn_backToMenu;
     int loc=0;
-    double[] stage={3,2.7,2.2,1.5,1.3,0.3};
-    ;
+
+    double[] stage={0,1,2,3,4};
+    ArrayList<Double> list =new ArrayList<>();
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -39,15 +48,29 @@ public class Chart extends Activity {
         btn_backToMenu.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent_backToMenu = new Intent(getApplication(),MainActivity.class);
+                Intent intent_backToMenu = new Intent(getApplication(), MainActivity.class);
                 intent_backToMenu.putExtra("isTrue","data-get");
                 startActivity(intent_backToMenu);
             }
         });
 
-        Intent get = getIntent();
-        double hueValue=get.getDoubleExtra("hue",0);
-        double ind=get.getDoubleExtra("index",0);
+        double hueValue=0;
+        double ind=0;
+
+        Intent geti=getIntent();
+        try {
+           double[] stages = geti.getExtras().getDoubleArray("chart_urobilinogen");
+
+            for(int x=0;x<stages.length;x++){
+                Log.i(TAG,Double.toString(stages[x]));
+            }
+           stage=stages;
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        for(int x=0;x<stage.length;x++){
+            Log.i(TAG,Double.toString(stage[x]));
+        }
 
         loc=(int)ind;
 
@@ -105,11 +128,11 @@ public class Chart extends Activity {
         renderer.setLabelsColor(Color.CYAN);    //x,y축 글자색
 
         //x,y축 표시 간격 ( 각 축의 범위에 따라 나눌 수 있는 최소치가 제한 됨 )
-        renderer.setXLabels(30);
+        renderer.setXLabels(10);
         renderer.setYLabels(10);
 
         int size=stage.length;
-        int max=(int)stage[0];
+        int max=4;
         //x축 최대 최소(화면에 보여질)
         renderer.setXAxisMin(0);
         renderer.setXAxisMax(size);
@@ -176,7 +199,7 @@ public class Chart extends Activity {
 
         XYSeries series = new XYSeries("평균RGB value");
         for (int i = 0; i < data.length; i++ ) {
-            series.add(i, data[i] );
+            series.add(i, stage[i] );
         }
 
         XYSeries series2 =new XYSeries("hue");
