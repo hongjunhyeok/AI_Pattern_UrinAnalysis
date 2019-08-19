@@ -1,127 +1,69 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:opencv="http://schemas.android.com/apk/res-auto"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:orientation="horizontal"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:paddingLeft="16dp"
+    android:paddingRight="16dp"
 
-    <!-- The primary full-screen view. This can be replaced with whatever view
-         is needed to present your content, e.g. VideoView, SurfaceView,
-         TextureView, etc. -->
+    tools:context=".MainActivity">
 
 
-    <LinearLayout
-        android:layout_width="match_parent"
+    <ImageView
+        android:id="@+id/ImageView"
+        android:layout_alignParentLeft="true"
+        android:layout_width="wrap_content"
         android:layout_height="match_parent"
-        android:layout_weight="1.5"
-        android:orientation="horizontal">
+        android:text="ImageView" />
 
-    </LinearLayout>
+    <Button
+        android:id="@+id/btn_analysis"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentRight="true"
+        android:layout_marginVertical="20dp"
+        android:background="#00FF0000"
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_weight="1"
-        android:orientation="horizontal">
-        <LinearLayout
-            android:orientation="horizontal"
-            android:layout_width="100dp"
-            android:padding="10dp"
-            android:layout_height="match_parent">
+        android:text="@string/btn_analysis"
+        />
 
+    <Button
+        android:id="@+id/btn_album"
+        android:layout_below="@id/btn_analysis"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentRight="true"
+        android:layout_marginVertical="20dp"
+        android:background="#00FF0000"
 
-        </LinearLayout>
+        android:text="@string/btn_album"
 
+        />
 
-        <org.opencv.android.JavaCameraView
+    <Button
+        android:id="@+id/btn_result"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/btn_album"
+        android:layout_alignParentRight="true"
+        android:layout_marginVertical="20dp"
+        android:background="#00FF0000"
+        android:text="@string/btn_result"
 
-            android:id="@+id/activity_surface_view"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:padding="100dp"
-            opencv:camera_id="any"
-            opencv:show_fps="true" />
+        />
 
+    <Button
+        android:id="@+id/btn_chart"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/btn_result"
+        android:layout_alignParentRight="true"
+        android:layout_marginVertical="20dp"
+        android:background="#00FF0000"
 
-    </LinearLayout>
-
-    <LinearLayout
-        android:layout_weight="1.5"
-
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical">
-
-        <Button
-            android:id="@+id/button1"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            android:text="Save" />
-
-        <Button
-            android:id="@+id/btn_TimerStop"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            android:text="Stop" />
-
-        <Button
-            android:id="@+id/button2"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            android:text="Detect" />
+        android:text="@string/btn_chart"
 
 
-        <TextView
-            android:id="@+id/text1"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            android:text="Glucose"
-            android:textSize="10sp" />
-
-        <TextView
-            android:id="@+id/text2"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            android:text="Protein"
-            android:textSize="10sp" />
-
-        <TextView
-            android:id="@+id/text3"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            android:text="pH"
-            android:textSize="10sp" />
-
-        <TextView
-            android:id="@+id/text4"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            android:text="RBC"
-            android:textSize="10sp" />
-
-        <Button
-            android:id="@+id/btn_TimerUp"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            android:text="+" />
-
-        <Button
-            android:id="@+id/btn_TimerDown"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            android:text="-" />
-
-    </LinearLayout>
-
-
-</LinearLayout>
+        />
+</RelativeLayout>

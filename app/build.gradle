@@ -27,4 +27,7 @@ dependencies {
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
     implementation project(':opencv')
     implementation files('libs/achartengine-1.1.0.jar')
+    implementation 'com.karumi:dexter:5.0.0'
+
+
 }
