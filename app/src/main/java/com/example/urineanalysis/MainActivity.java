@@ -21,8 +21,15 @@ import android.widget.Toast;
 
 import com.example.urineanalysis.utils.Chart;
 
+import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.ArrayList;
+
+import static android.support.constraint.Constraints.TAG;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -36,6 +43,7 @@ public class MainActivity extends AppCompatActivity {
     public final int PICK_FROM_ACTIVITY=5555;
 
     public final String TAG="MainActiviy_TAG";
+    private final String fileName = Environment.getExternalStorageDirectory() + "/OneFileUrineCup/2.txt" ;
 
 
 
@@ -75,26 +83,27 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View view) {
 
 
-                Intent i = new Intent(getApplicationContext(), Chart.class);
-                Intent geti=getIntent();
-
-                try {
-                    double[] chart_urobilinogen=geti.getExtras().getDoubleArray("chart_urobilinogen");
-
-                    for(int x=0;x<chart_urobilinogen.length;x++){
-                        Log.i(TAG,Double.toString(chart_urobilinogen[x]));
-                    }
-                    i.putExtra("chart_urobilinogen",chart_urobilinogen);
-
-                }catch(Exception e){
-                 Log.i(TAG,e.toString());
-                }
+                Intent i = new Intent(getApplicationContext(), Chart2Activity.class);
+//                Intent geti=getIntent();
+//
+//                try {
+//                    double[] chart_urobilinogen=geti.getExtras().getDoubleArray("chart_urobilinogen");
+//
+//                    for(int x=0;x<chart_urobilinogen.length;x++){
+//                        Log.i(TAG,Double.toString(chart_urobilinogen[x]));
+//                    }
+//                    i.putExtra("chart_urobilinogen",chart_urobilinogen);
+//
+//                }catch(Exception e){
+//                 Log.i(TAG,e.toString());
+//                }
 
 
                 startActivity(i);
 
-
-
+                ArrayList<Double>tmp=new ArrayList<>();
+                tmp=fileRead("urobilinogen.txt");
+                Log.i(TAG,String.format("tmp : %d",tmp.size()));
             }
         });
 
@@ -103,39 +112,7 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View view) {
 
                 Intent i=new Intent(getApplicationContext(),ResultActivity.class);
-                Intent geti=getIntent();
-                String hue_urobilinogen="ddddd";
-                String hue_bilirubin="";
-                String hue_protein="";
-                String hue_gloucose="";
 
-
-                Log.i(TAG,hue_urobilinogen);
-
-                try {
-                    hue_urobilinogen = geti.getExtras().getString("hue_urobilinogen");
-
-                    BitmapFactory.Options options = new BitmapFactory.Options();
-                    Bitmap sendBitmap=BitmapFactory.decodeFile(tempFile.getAbsolutePath(),options);
-
-
-                    ByteArrayOutputStream stream=new ByteArrayOutputStream();
-                    sendBitmap.compress(Bitmap.CompressFormat.JPEG,100,stream);
-
-
-                    byte[] byteArray =stream.toByteArray();
-                    i.putExtra("image",byteArray);
-                    i.putExtra("hue_urobilinogen",hue_urobilinogen);
-
-
-                }catch (Exception e){
-                    e.printStackTrace();
-                    Log.i(TAG,e.toString());
-                }
-
-                if(hue_urobilinogen!=null){
-                    Log.i(TAG,hue_urobilinogen);
-                }
 
 
 
@@ -214,4 +191,61 @@ public class MainActivity extends AppCompatActivity {
         iv.setImageBitmap(originalBm);
 
     }
+
+    FileReader fileReader=null;
+    BufferedReader bufferedReader =null;
+    String line =null;
+    double avg=0.0;
+    int counter=0;
+
+    public ArrayList<Double> fileRead(String fileName){
+        String path = Environment.getExternalStorageDirectory() + "/OneFileUrineCup/" ;
+        ArrayList<Double>data=new ArrayList<>();
+        try{
+            fileReader=new FileReader(path+fileName);
+            bufferedReader =
+                    new BufferedReader(fileReader);
+
+            while((line = bufferedReader.readLine()) != null) {
+                counter++;
+                if(counter <100)
+                {
+
+                    // line = null이면 break
+                    if(line.isEmpty())
+                    {
+                        break;
+                    }
+
+                    //line = NaN이면 pass
+                    Double doub=Double.parseDouble(line);
+                    if(doub.isNaN()){
+                        counter--;
+                        continue;
+                    }
+//                    Log.i(TAG,String.format("%d %.3f",counter,avg));
+                    data.add(doub);
+                    avg+=doub;
+                }
+            }
+
+            bufferedReader.close();
+            fileReader.close();
+
+            Log.i(TAG,String.format("Result %.3f",avg/counter));
+
+        } catch(FileNotFoundException ex) {
+            Log.i(TAG,ex.toString());
+        }
+        catch(Exception ex) {
+            Log.i(TAG,ex.toString());
+        }
+        //null방지용
+        if(data.size()<1){
+            data.add(0.0);
+        }
+
+        return data;
+    }
+
 }
