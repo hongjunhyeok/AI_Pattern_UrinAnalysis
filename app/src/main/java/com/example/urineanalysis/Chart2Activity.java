@@ -89,7 +89,8 @@ public class Chart2Activity extends AppCompatActivity {
                 .zIndex(10d);
         crosshair.yLabel(0).enabled(true);
 //        areaChart.yScale().comparisonMode(ScaleComparisonMode.VALUE);
-        areaChart.yScale().softMaximum();
+//        areaChart.yScale().comparisonMode(ScaleComparisonMode.VALUE);
+        areaChart.yScale().stackMode(ScaleStackMode.VALUE);
 
         areaChart.title("소변시험지 결과분석표");
 
@@ -156,7 +157,7 @@ public class Chart2Activity extends AppCompatActivity {
 
         areaChart.interactivity().hoverMode(HoverMode.BY_X);
         areaChart.tooltip()
-                .background(false)
+                .background(true)
                 .valuePrefix("농도")
                 .valuePostfix(" mg/dL.")
                 .displayMode(TooltipDisplayMode.UNION);

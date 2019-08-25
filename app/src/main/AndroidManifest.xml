@@ -31,15 +31,19 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <activity
+            android:name=".Tab.Tab2Activity"
+            android:configChanges="orientation|keyboardHidden|screenSize"
+            android:label="@string/title_activity_tab2"
+            android:theme="@style/FullscreenTheme"></activity>
+        <activity android:name=".Tab.Tab1Activity" />
+        <activity
             android:name=".Chart2Activity"
             android:screenOrientation="sensorLandscape"
             android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
-
         <activity
             android:name=".ResultActivity"
             android:screenOrientation="sensorLandscape"
             android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
-
         <activity android:name=".ImageCropActivity" />
         <activity
             android:name=".MainActivity"
@@ -51,7 +55,6 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
         <activity
             android:name=".AnalysisActivity"
             android:screenOrientation="sensorLandscape"
