@@ -44,19 +44,20 @@
             android:layout_height="match_parent">
 
             <Button
-                android:layout_weight="1"
 
+                android:layout_margin="20dp"
+                android:layout_weight="1"
                 android:id="@+id/btn_analysis"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-
-                android:background="#00FF0000"
-
+                android:background="#FFBB97"
                 android:text="@string/btn_analysis"
+                android:textSize="20dp"
                 />
 
             <Button
-
+                android:layout_margin="20dp"
+                android:textSize="20dp"
                 android:layout_weight="1"
                 android:id="@+id/btn_album"
                 android:layout_width="match_parent"
@@ -64,7 +65,7 @@
 
 
 
-                android:background="#00FF0000"
+                android:background="#FFBB97"
 
                 android:text="@string/btn_album"
 
@@ -82,27 +83,29 @@
 
             <Button
                 android:layout_weight="1"
+                android:layout_margin="20dp"
 
                 android:id="@+id/btn_result"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
 
+                android:background="#FFBB97"
+                android:textSize="20dp"
 
-
-                android:background="#00FF0000"
                 android:text="@string/btn_result"
 
                 />
 
             <Button
                 android:layout_weight="1"
+                android:layout_margin="20dp"
 
                 android:id="@+id/btn_chart"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
 
-                android:background="#00FF0000"
-
+                android:background="#FFBB97"
+                android:textSize="20dp"
                 android:text="@string/btn_chart"
                 />
 

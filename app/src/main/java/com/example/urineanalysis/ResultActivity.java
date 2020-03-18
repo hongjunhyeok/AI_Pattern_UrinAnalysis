@@ -48,6 +48,8 @@ public class ResultActivity extends AppCompatActivity {
     ArrayList<Double>list_bilirubin=new ArrayList<>();
     ArrayList<Double>list_urobilinogen=new ArrayList<>();
 
+    final int weight1=5, weight2=12,weight3=20,weight4=35;
+
     final String TAG= "ResultActivity_TAG";
 
     @Override
@@ -72,7 +74,6 @@ public class ResultActivity extends AppCompatActivity {
             list_gloucose = folderUtil.fileRead("gloucose.txt");
             list_protein = folderUtil.fileRead("protein.txt");
             list_urobilinogen = folderUtil.fileRead("urobilinogen.txt");
-            Log.i(TAG, Integer.toString(list_urobilinogen.size()));
 
 
         } catch (Exception e) {
@@ -80,7 +81,9 @@ public class ResultActivity extends AppCompatActivity {
         }
         //차트에 사용할 데이터 전처리}}}
 
-
+        for(int i=0;i<list_protein.size();i++) {
+            Log.i(TAG,Double.toString(list_protein.get(i)));
+        }
         draw_g();
         draw_p();
         draw_b();
@@ -95,7 +98,7 @@ public class ResultActivity extends AppCompatActivity {
 
         double tmp=0.0;
         for (int i = 0; i < list_gloucose.size(); i++) {
-            tmp += list_gloucose.get(i);
+            tmp += list_gloucose.get(i)*weight1;
         }
 
 
@@ -188,7 +191,7 @@ public class ResultActivity extends AppCompatActivity {
 
         double tmp=0.0;
         for (int i = 0; i < list_bilirubin.size(); i++) {
-            tmp += list_bilirubin.get(i);
+            tmp += list_bilirubin.get(i)+weight3; //********************** for TEST 30은 가중치!
         }
 
 
@@ -285,7 +288,7 @@ public class ResultActivity extends AppCompatActivity {
         double tmp=0.0;
 
         for (int i = 0; i < list_urobilinogen.size(); i++) {
-            tmp += list_urobilinogen.get(i);
+            tmp += list_urobilinogen.get(i)*weight4 ;
         }
 
         linearGauge4.data(new SingleValueDataSet(new Double[]{tmp / list_urobilinogen.size()}));
@@ -365,7 +368,6 @@ public class ResultActivity extends AppCompatActivity {
 
         anyChartView4.setChart(linearGauge4);
     }
-
     public void draw_p(){
         AnyChartView anyChartView2 = findViewById(R.id.rst_chart_view_protein);
         APIlib.getInstance().setActiveAnyChartView(anyChartView2);
@@ -378,7 +380,7 @@ public class ResultActivity extends AppCompatActivity {
         double tmp=0.0;
 
         for (int i = 0; i < list_protein.size(); i++) {
-            tmp += list_protein.get(i);
+            tmp += list_protein.get(i)*weight2;
         }
 
         linearGauge2.data(new SingleValueDataSet(new Double[]{tmp / list_protein.size()}));
@@ -458,6 +460,8 @@ public class ResultActivity extends AppCompatActivity {
 
         anyChartView2.setChart(linearGauge2);
     }
+
+
 }
 
 

@@ -5,8 +5,9 @@
     android:layout_height="match_parent"
     android:orientation="horizontal">
 
+
         
-        
+
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
@@ -29,6 +30,12 @@
 
 
         </LinearLayout>
+
+        <ProgressBar
+            android:id="@+id/rst_progressBar"
+            android:layout_width="wrap_content"
+            android:layout_gravity="center"
+            android:layout_height="wrap_content" />
 
         <LinearLayout
             android:layout_width="wrap_content"
@@ -74,11 +81,6 @@
             <!--android:id="@+id/rst_chart_view_urobilinogen"-->
             <!--android:layout_width="wrap_content"-->
             <!--android:layout_height="wrap_content" />-->
-
-        <ProgressBar
-            android:id="@+id/rst_progressBar"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
 
 
 </LinearLayout>

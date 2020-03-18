@@ -1,6 +1,7 @@
 package com.example.urineanalysis;
 
 import android.hardware.Camera;
+import android.os.Environment;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -27,6 +28,8 @@ import com.anychart.enums.TooltipDisplayMode;
 import com.anychart.graphics.vector.Stroke;
 import com.example.urineanalysis.utils.FolderUtil;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -52,7 +55,25 @@ public class Chart2Activity extends AppCompatActivity {
         Set set = Set.instantiate();
         FolderUtil folderUtil=new FolderUtil();
         List<DataEntry> seriesData=new ArrayList<>();
+        List<String> dayData=new ArrayList<>();
+        List<String> IndexData=new ArrayList<>();
+
+        String line="";
+
         try {
+            FileReader reader=new FileReader(Environment.getExternalStorageDirectory() + "/OneFileUrineCup/gloucose.txt");
+            BufferedReader rd1 =new BufferedReader(reader);
+
+
+            while((line =rd1.readLine()) != null){
+
+                String[] lineFormat= line.split("-");
+                Log.i(TAG,lineFormat[1]);
+                IndexData.add(lineFormat[0]);
+                dayData.add(lineFormat[1]);
+
+            }
+
 
             list_bilirubin=folderUtil.fileRead("bilirubin.txt");
             list_gloucose=folderUtil.fileRead("gloucose.txt");
@@ -60,14 +81,24 @@ public class Chart2Activity extends AppCompatActivity {
             list_urobilinogen=folderUtil.fileRead("urobilinogen.txt");
             Log.i(TAG,Integer.toString(list_urobilinogen.size()));
 
-            for(int i=0;i<list_urobilinogen.size();i++){
-                seriesData.add(new CustomDataEntry(String.format("%d주",i+1),list_gloucose.get(i),list_protein.get(i),list_bilirubin.get(i),list_urobilinogen.get(i)));
-            }
+            if(list_urobilinogen.size()<=7) {
+                for (int i = 0; i < list_urobilinogen.size(); i++) {
+                    seriesData.add(new CustomDataEntry(IndexData.get(i) + "/" + dayData.get(i), list_gloucose.get(i), list_protein.get(i), list_bilirubin.get(i), list_urobilinogen.get(i)));
+//                seriesData.add(new CustomDataEntry(String.format("%d주",i+1),1,2,3,4));
 
+                }
+            }else{
+                for (int i = list_urobilinogen.size()-7; i < list_urobilinogen.size(); i++) {
+                    seriesData.add(new CustomDataEntry(IndexData.get(i) + "/" + dayData.get(i), list_gloucose.get(i), list_protein.get(i), list_bilirubin.get(i), list_urobilinogen.get(i)));
+//                seriesData.add(new CustomDataEntry(String.format("%d주",i+1),1,2,3,4));
+
+                }
+            }
             set.data(seriesData);
 
         }catch(Exception e){
             e.printStackTrace();
+            Log.i(TAG,e.toString());
         }
         //차트에 사용할 데이터 전처리}}}
 

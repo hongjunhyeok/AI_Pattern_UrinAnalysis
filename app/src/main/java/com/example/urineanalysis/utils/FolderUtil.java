@@ -43,12 +43,19 @@ public class FolderUtil {
     public ArrayList<Double> fileRead(String fileName){
         String path = Environment.getExternalStorageDirectory() + "/OneFileUrineCup/" ;
         ArrayList<Double>data=new ArrayList<>();
+        double safeValue=2.0;
+
         try{
             fileReader=new FileReader(path+fileName);
             bufferedReader =
                     new BufferedReader(fileReader);
 
             while((line = bufferedReader.readLine()) != null) {
+
+                String[] context=line.split("-");
+                String index=context[0];
+                String date=context[1];
+                String value=context[2];
                 counter++;
                 if(counter <100)
                 {
@@ -60,12 +67,18 @@ public class FolderUtil {
                     }
 
                     //line = NaN이면 pass
-                    Double doub=Double.parseDouble(line);
-                    if(doub.isNaN()){
-                        counter--;
+
+                    Double doub=Double.parseDouble(value);
+
+                    if(doub.isNaN() || doub==0){
+                        data.add(safeValue);
+
                         continue;
                     }
 //                    Log.i(TAG,String.format("%d %.3f",counter,avg));
+                    safeValue=doub;
+
+
                     data.add(doub);
                     avg+=doub;
                 }
@@ -74,17 +87,12 @@ public class FolderUtil {
             bufferedReader.close();
             fileReader.close();
 
-            Log.i(TAG,String.format("Result %.3f",avg/counter));
-
         } catch(FileNotFoundException ex) {
             Log.i(TAG,ex.toString());
         }
         catch(Exception ex) {
             Log.i(TAG,ex.toString());
         }
-
-
-
 
         //null방지용
         if(data.size()<1){

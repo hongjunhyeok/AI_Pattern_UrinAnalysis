@@ -1,9 +1,9 @@
 <resources>
     <string name="app_name">UrineAnalysis</string>
-    <string name="btn_analysis">Analysis</string>
-    <string name="btn_chart">chart</string>
-    <string name="btn_result">result</string>
-    <string name="btn_album">album</string>
+    <string name="btn_analysis">분 석</string>
+    <string name="btn_chart">차 트</string>
+    <string name="btn_result">결 과</string>
+    <string name="btn_album">사 진</string>
     <string name="show_histogram">Show Histogram</string>
     <string name="source_image">Source Image</string>
     <string name="select_gallery">Select Image from gallery</string>
