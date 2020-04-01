@@ -112,10 +112,10 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
 
     //{{{{do process
     Point p[] = new Point[5];
-    //    Point[] gloucose_p = new Point[6];
-//    Point[] protein_p = new Point[6];
+        Point[] gloucose_p = new Point[6];
+    Point[] protein_p = new Point[6];
     Point[] bilirubin_p = new Point[4];
-//    Point[] urobilinogen_p = new Point[4];
+    Point[] urobilinogen_p = new Point[4];
 
 
     double[] rgbV_GLOUCOSE = new double[3];
@@ -451,6 +451,9 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
 
 
                 for (int k = 0; k < bubble_array.length; k++) {
+
+                    if(bubble_array.length>4) break;
+
 
                     tl_x[k] =bubble_array[k].tl().x;
                     tl_y[k] =bubble_array[k].tl().y;
@@ -891,21 +894,21 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
             tl_y[i]=0.0;
 
         }
-//
-//        for(int i=0;i<6;i++){
-//            urobilinogen_p[i]=new Point(-size,-240+45*i);
-//            if(i>=3){
-//                urobilinogen_p[i]=new Point(-size,-20+45*i);
-//            }
-//        }
-//
-//
-//        for(int i=0;i<6;i++){
-//            protein_p[i]=new Point(-size,-240+45*i);
-//            if(i>=3){
-//                protein_p[i]=new Point(-size,-20+45*i);
-//            }
-//        }
+
+        for(int i=0;i<6;i++){
+            urobilinogen_p[i]=new Point(-size,-240+45*i);
+            if(i>=3){
+                urobilinogen_p[i]=new Point(-size,-20+45*i);
+            }
+        }
+
+
+        for(int i=0;i<6;i++){
+            protein_p[i]=new Point(-size,-240+45*i);
+            if(i>=3){
+                protein_p[i]=new Point(-size,-20+45*i);
+            }
+        }
 
     }
 
