@@ -7,16 +7,13 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
-import android.provider.MediaStore;
 import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -32,7 +29,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.urineanalysis.utils.CalculateHue;
-import com.example.urineanalysis.utils.Chart;
 import com.karumi.dexter.Dexter;
 import com.karumi.dexter.MultiplePermissionsReport;
 import com.karumi.dexter.PermissionToken;
@@ -55,9 +51,11 @@ import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 import org.opencv.objdetect.CascadeClassifier;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
@@ -69,9 +67,6 @@ import java.util.List;
 import java.util.Locale;
 
 import com.example.urineanalysis.utils.preprocess.ImagePreprocessor;
-import com.example.urineanalysis.utils.Constants;
-import com.example.urineanalysis.utils.FolderUtil;
-import com.example.urineanalysis.utils.Utilities;
 
 
 public class AnalysisActivity extends AppCompatActivity implements CameraBridgeViewBase.CvCameraViewListener2 {
@@ -106,7 +101,7 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
 
     // RGB detect
 
-    public int Timer = 600;
+    public int Timer = 1800;
     public int time = 0;
     int count = 0;
 
@@ -114,14 +109,14 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
     Point p[] = new Point[5];
         Point[] gloucose_p = new Point[6];
     Point[] protein_p = new Point[6];
-    Point[] bilirubin_p = new Point[4];
-    Point[] urobilinogen_p = new Point[5];
+    Point[] rbc_p = new Point[4];
+    Point[] ph_p = new Point[5];
 
 
     double[] rgbV_GLOUCOSE = new double[3];
     double[] rgbV_PROTEIN = new double[3];
-    double[] rgbV_BILIRUBIN = new double[3];
-    double[] rgbV_UROBILINOGEN = new double[3];
+    double[] rgbV_RBC = new double[3];
+    double[] rgbV_PH = new double[3];
     double[] rgbV_REFERENCE = new double[3];
 
     Double tl_x[] = new Double[4];
@@ -130,21 +125,38 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
     Double br_x[] = new Double[4];
     Double br_y[] = new Double[4];
 
-    double[]xu=new double[6];
-    double[]yu=new double[6];
+    double[] xh =new double[6];
+    double[] yh =new double[6];
     double[]xg=new double[6];
     double[]yg=new double[6];
     double[]xp=new double[6];
     double[]yp=new double[6];
-    double[]xb=new double[6];
-    double[]yb=new double[6];
+    double[] xr =new double[6];
+    double[] yr =new double[6];
 
 
-    static double graph_a=0.0;
-    double graph_b=0;
+    double rbc_incline =0.0;
+     double ph_incline =0.0;
+     double glou_incline=0.0;
+    double prot_incline=0.0;
 
-    double hue_bili = 0;
-    double[] hue_bilis = new double[4];
+    double graph_rbc_a =0.0;
+    double graph_ph_a =0.0;
+    double graph_glou_a=0.0;
+    double graph_prot_a=0.0;
+
+    double graph_rbc_b =0.0;
+    double graph_ph_b =0.0;
+    double graph_glou_b=0.0;
+    double graph_prot_b=0.0;
+
+    double hue_g=0,hue_p=0,hue_r=0,hue_h=0;
+    double idx_g=0,idx_p=0,idx_r=0,idx_h=0;
+
+
+
+    double hue_rbc = 0;
+    double[] hue_rbcs = new double[4];
     ArrayList<Double> hue_avg = new ArrayList<>();
     ArrayList<String> strR = new ArrayList<>();
     ArrayList<String> strG = new ArrayList<>();
@@ -156,11 +168,11 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
 
     Rect[] bubble_array;
     String msg_rgb;
-    String msg_hue, msg_bilirubin;
+    String msg_hue="", msg_rbc;
     TimerHandler timerHandler = new TimerHandler();
     Intent intent_to_main;
     CalculateHue calculateHue=null;
-    String msgR = "R: ", msgG = "G: ", msgB = "B: ", msgH = "";
+    String msgR = "R: ", msgG = "G: ", msgB = "B: ", msgResult = "", msgChart ="";
 
 
     @Override
@@ -212,6 +224,7 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
 
 
         mOpenCvCameraView = (OpenCameraView) findViewById(R.id.activity_surface_view);
+//        mOpenCvCameraView.setAF();
         mOpenCvCameraView.setVisibility(SurfaceView.VISIBLE);
         mOpenCvCameraView.setCvCameraViewListener(this);
         mOpenCvCameraView.setCameraIndex(1); // front-camera(1),  back-camera(0)
@@ -240,11 +253,13 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
 
                 long now = System.currentTimeMillis();
                 Date date = new Date(now);
-                SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd-HHmmss", Locale.KOREA);
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyy.MM.dd.-HH:mm:ss", Locale.KOREA);
                 String filename = "Screenshot_" + sdf.format(date) + ".jpg";
 
 
+
                 File sd = new File(Environment.getExternalStorageDirectory().getPath() + "/UrineImages/");
+
 
 
                 boolean success = true;
@@ -285,7 +300,7 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
                 intent_to_main = new Intent(AnalysisActivity.this, MainActivity.class);
                 String tmpH_uro = "";
 
-                intent_to_main.putExtra("hue_urobilinogen", msgH);
+                intent_to_main.putExtra("hue_urobilinogen", msgResult);
 
                 double[] hue_urobilinogen_for_chart = new double[dbH.size()];
 
@@ -294,7 +309,7 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
                 }
 
                 intent_to_main.putExtra("chart_urobilinogen", hue_urobilinogen_for_chart);
-                Log.i(TAG, "msgH : " + msgH);
+                Log.i(TAG, "msgResult : " + msgResult);
 
                 startActivity(intent_to_main);
             }
@@ -307,14 +322,18 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
                 String tmpH_uro = "";
 
 
-//                writeToFileAll();
+                writeToFileAll();
+                Intent i = new Intent(getApplicationContext(),MainActivity.class);
+                Toast.makeText(getApplicationContext(),"The data saved sucessfully",Toast.LENGTH_SHORT).show();
                 timerHandler.sendEmptyMessage(MESSAGE_TIMER_STOP);
+                count=Timer;
+                startActivity(i);
             }
         });
         bt_up.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Timer += 100;
+                Timer += 5;
                 time = Timer;
                 Toast.makeText(getApplicationContext(), String.format(Locale.KOREA, "Timer :%d second", Timer), Toast.LENGTH_SHORT).show();
             }
@@ -322,7 +341,7 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
         bt_dn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Timer -= 100;
+                Timer -= 5;
                 time = Timer;
                 Toast.makeText(getApplicationContext(), String.format(Locale.KOREA, "Timer :%d second", Timer), Toast.LENGTH_SHORT).show();
 
@@ -333,12 +352,18 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
         btn_detect.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                mViewMode = VIEW_MODE_START;
 
-                timerHandler.sendEmptyMessage(MESSAGE_TIMER_START);
+                try {
+                    mViewMode = VIEW_MODE_START;
 
-                Timer += 10;
+                    timerHandler.sendEmptyMessage(MESSAGE_TIMER_START);
 
+                    Timer += 5;
+                }
+                catch (Exception e){
+                    Log.i(TAG,e.toString());
+                    Toast.makeText(getApplicationContext(),"Focusing 실패 다시눌러누세요",Toast.LENGTH_SHORT).show();
+                }
 
 
 
@@ -415,12 +440,10 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
         final int viewMode = mViewMode;
         switch (viewMode) {
             case VIEW_MODE_START:
+
+                try {
                 MatOfRect bubble_rect = new MatOfRect();
 
-
-//        Point t1= new Point(cropped_x,cropped_y);
-//        Point t2 = new Point(cropped_x+cropped_w,cropped_y+cropped_h);
-//        cropped_img = new Mat(mGray,new Rect(t1,t2));
 
                 if (mJavaDetector != null) {
                     mJavaDetector.detectMultiScale(mGray, bubble_rect, 2, 1, 0, new Size(), new Size());
@@ -453,15 +476,23 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
                 }
 
 
-                try {
+
                     doProcess();
                 } catch (Exception e) {
-//                    mViewMode = VIEW_MODE_INIT;
+                    Intent i =new Intent(getApplicationContext(),MainActivity.class);
+                    startActivityForResult(i, Activity.RESULT_OK);
                     Log.i(TAG, e.toString());
                 }
 //                doProcess();
                 break;
             case VIEW_MODE_INIT:
+
+                Imgproc.rectangle(mRgba,new Point(900,300),new Point(950,350),new Scalar(255,255,255),2,1);
+
+                double[] tmpavg=average_RGB(925,325);
+                double[] rgb=mRgba.get(325,925);
+                double rst=calculateHue.getH(tmpavg);
+                Imgproc.putText(mRgba,String.format("RGB :%.1f %.1f %.1f H: %.3f",rgb[0],rgb[1],rgb[2],rst),new Point(850,300),1,2,new Scalar(255,255,255));
                 break;
 
         }
@@ -474,8 +505,6 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
 //        }
 
         return mRgba;
-
-
     }
 
     private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
@@ -514,7 +543,6 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
 
 
                         is.close();
-
                         os.close();
 
                         mJavaDetector = new CascadeClassifier(mCascadeFile.getAbsolutePath());
@@ -717,45 +745,51 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
                 double x = middlex + (Math.cos(angle) * p[i].x - Math.sin(angle) * p[i].y) * ratio;
                 double y = middley + (Math.sin(angle) * p[i].x + Math.cos(angle) * p[i].y) * ratio;
                 double Hue=calculateHue.getH(average_RGB((int)x,(int)y));
+                double[] rgb=mRgba.get((int)y,(int)x);
                 Imgproc.circle(mRgba, new Point(x, y), (int) (10), new Scalar(255, 255, 255));
-                Imgproc.circle(mRgba, new Point(x, y), (int) (10), new Scalar(255, 255, 255));
-                Imgproc.putText(mRgba,String.format(Locale.KOREA,"%.2f",Hue),new Point(x+20,y),1,2,new Scalar(255,255,255));
+//                Imgproc.circle(mRgba, new Point((int)p[i].x,(int)p[i]. y), (int) (10), new Scalar(255, 255, 255));
+
 
 
                 if (i == 0) {
-                    rgbV_GLOUCOSE = average_RGB((int) p[0].y, (int) p[0].x);
+                    rgbV_GLOUCOSE = average_RGB((int) x, (int) y);
+                    Imgproc.putText(mRgba,String.format(Locale.KOREA,"%.1f" ,calculateHue.getH(rgbV_GLOUCOSE)),new Point(x+10,y),1,2,new Scalar(255,255,255));
 
                 }
                 if (i == 1) {
-                    rgbV_PROTEIN = average_RGB((int) p[1].y, (int) p[1].x);
+                    rgbV_PROTEIN = average_RGB((int)x, (int)y);
+                    Imgproc.putText(mRgba,String.format(Locale.KOREA,"%.1f" ,calculateHue.getH(rgbV_PROTEIN)),new Point(x+10,y),1,2,new Scalar(255,255,255));
 
                 }
 
                 if (i == 2) {
-                    rgbV_BILIRUBIN = average_RGB((int) p[2].x, (int) p[2].y);
+                    rgbV_RBC = average_RGB((int)x, (int)y);
+                    Imgproc.putText(mRgba,String.format(Locale.KOREA,"%.1f" ,calculateHue.getH(rgbV_RBC)),new Point(x+10,y),1,2,new Scalar(255,255,255));
 
                 }
                 if (i == 3) {
-                    rgbV_UROBILINOGEN = average_RGB((int) p[3].x, (int) p[3].y);
+                    rgbV_PH = average_RGB((int) x, (int) y);
+                    Imgproc.putText(mRgba,String.format(Locale.KOREA,"%.1f" ,calculateHue.getH(rgbV_PH)),new Point(x+10,y),1,2,new Scalar(255,255,255));
 
                 }
                 if (i == 4) {
-                    rgbV_REFERENCE = average_RGB((int) p[4].x, (int) p[4].y);
+                    rgbV_REFERENCE = average_RGB((int) x, (int) y);
+                    Imgproc.putText(mRgba,String.format(Locale.KOREA,"%.1f" ,calculateHue.getH(rgbV_REFERENCE)),new Point(x+10,y),1,2,new Scalar(255,255,255));
                 }
             }
 
             for (int i=0;i<5;i++){
-                xu[i] = middlex + (Math.cos(angle) * urobilinogen_p[i].x - Math.sin(angle) * urobilinogen_p[i].y) * ratio;
-                yu[i] = middley + (Math.sin(angle) * urobilinogen_p[i].x + Math.cos(angle) * urobilinogen_p[i].y) * ratio;
+                xh[i] = middlex + (Math.cos(angle) * ph_p[i].x - Math.sin(angle) * ph_p[i].y) * ratio;
+                yh[i] = middley + (Math.sin(angle) * ph_p[i].x + Math.cos(angle) * ph_p[i].y) * ratio;
 
-                Imgproc.circle(mRgba, new Point(xu[i], yu[i]), (int) (10 * ratio), new Scalar(255, 255, 255));
-                Imgproc.putText(mRgba,String.format("%.1f",calculateHue.getH(average_RGB((int)xu[i],(int)yu[i]))),new Point(xu[i],yu[i]-50),1,2,new Scalar(255,255,255));
+                Imgproc.circle(mRgba, new Point(xh[i], yh[i]), (int) (10 * ratio), new Scalar(255, 255, 255));
+                Imgproc.putText(mRgba,String.format("%.1f",calculateHue.getH(average_RGB((int) xh[i],(int) yh[i]))),new Point(xh[i], yh[i]-25),1,2,new Scalar(255,255,255));
             }
             for (int i=0;i<4;i++){
-                xb[i] = middlex + (Math.cos(angle) * bilirubin_p[i].x - Math.sin(angle) * bilirubin_p[i].y) * ratio;
-                yb[i] = middley + (Math.sin(angle) * bilirubin_p[i].x + Math.cos(angle) * bilirubin_p[i].y) * ratio;
-                Imgproc.circle(mRgba, new Point(xb[i], yb[i]), (int) (10 * ratio), new Scalar(255, 255, 255));
-                Imgproc.putText(mRgba,String.format("%.1f",calculateHue.getH(average_RGB((int)xb[i],(int)yb[i]))),new Point(xb[i]+50,yb[i]),1,2,new Scalar(255,255,255));
+                xr[i] = middlex + (Math.cos(angle) * rbc_p[i].x - Math.sin(angle) * rbc_p[i].y) * ratio;
+                yr[i] = middley + (Math.sin(angle) * rbc_p[i].x + Math.cos(angle) * rbc_p[i].y) * ratio;
+                Imgproc.circle(mRgba, new Point(xr[i], yr[i]), (int) (10 * ratio), new Scalar(255, 255, 255));
+                Imgproc.putText(mRgba,String.format("%.1f",calculateHue.getH(average_RGB((int) xr[i],(int) yr[i]))),new Point(xr[i]+25, yr[i]),1,2,new Scalar(255,255,255));
             }
 
             for (int i = 0; i < 6; i++) {
@@ -770,29 +804,24 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
 
                 Imgproc.circle(mRgba, new Point(xg[i], yg[i]), (int) (10 * ratio), new Scalar(255, 255, 255));
                 Imgproc.circle(mRgba, new Point(xp[i], yp[i]), (int) (10 * ratio), new Scalar(255, 255, 255));
-                Imgproc.putText(mRgba,String.format("%.1f",calculateHue.getH(average_RGB((int)xg[i],(int)yg[i]))),new Point(xg[i]+50,yg[i]),1,2,new Scalar(255,255,255));
-                Imgproc.putText(mRgba,String.format("%.1f",calculateHue.getH(average_RGB((int)xp[i],(int)yp[i]))),new Point(xp[i],yp[i]-50),1,2,new Scalar(255,255,255));
+                Imgproc.putText(mRgba,String.format("%.1f",calculateHue.getH(average_RGB((int)xg[i],(int)yg[i]))),new Point(xg[i]+25,yg[i]),1,2,new Scalar(255,255,255));
+                Imgproc.putText(mRgba,String.format("%.1f",calculateHue.getH(average_RGB((int)xp[i],(int)yp[i]))),new Point(xp[i],yp[i]-25),1,2,new Scalar(255,255,255));
 
             }
 
 
 
-            Imgproc.putText(mRgba, "0", new Point(sorted_x[0], sorted_y[0]), 1, 3, new Scalar(255, 0, 0), 2);
-            Imgproc.putText(mRgba, "1", new Point(sorted_x[1], sorted_y[1]), 1, 3, new Scalar(255, 0, 0), 2);
-            Imgproc.putText(mRgba, "2", new Point(sorted_x[2], sorted_y[2]), 1, 3, new Scalar(255, 0, 0), 2);
-            Imgproc.putText(mRgba, "3", new Point(sorted_x[3], sorted_y[3]), 1, 3, new Scalar(255, 0, 0), 2);
+            Imgproc.putText(mRgba, "Gc", new Point(sorted_x[0], sorted_y[0]), 1, 3, new Scalar(255, 0, 0), 2);
+            Imgproc.putText(mRgba, "Pt", new Point(sorted_x[1], sorted_y[1]), 1, 3, new Scalar(255, 0, 0), 2);
+            Imgproc.putText(mRgba, "pH", new Point(sorted_x[2], sorted_y[2]), 1, 3, new Scalar(255, 0, 0), 2);
+            Imgproc.putText(mRgba, "RBC", new Point(sorted_x[3], sorted_y[3]), 1, 3, new Scalar(255, 0, 0), 2);
 
             Imgproc.putText(mRgba, String.format(Locale.KOREA, "height : %.2f", 10 * (290 / distance)), new Point(0, 100), 1, 2, new Scalar(255, 0, 0), 2);
             Imgproc.putText(mRgba, String.format(Locale.KOREA, "angle : %.2f", angle), new Point(0, 200), 1, 2, new Scalar(255, 0, 0), 2);
-//            Imgproc.putText(mRgba, String.format("hue : %.2f", calculateHue.getH(rgbV_BILIRUBIN)), new Point(0, 200), 1, 2, new Scalar(255, 0, 0), 2);
-//            Imgproc.putText(mRgba, String.format("rgb : %.2f %.2f %.2f",rgbV_BILIRUBIN[0],rgbV_BILIRUBIN[1],rgbV_BILIRUBIN[2]), new Point(0, 300), 1, 2, new Scalar(255, 0, 0), 2);
+//            Imgproc.putText(mRgba, String.format("hue : %.2f", calculateHue.getH(rgbV_RBC)), new Point(0, 200), 1, 2, new Scalar(255, 0, 0), 2);
+//            Imgproc.putText(mRgba, String.format("rgb : %.2f %.2f %.2f",rgbV_RBC[0],rgbV_RBC[1],rgbV_RBC[2]), new Point(0, 300), 1, 2, new Scalar(255, 0, 0), 2);
 
 
-            hue_bili = calculateHue.getH(rgbV_UROBILINOGEN);
-            hue_avg.add(hue_bili);
-            if (hue_avg.size() > 1000) {
-                hue_avg.clear();
-            }
 
 
         }
@@ -814,7 +843,7 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
 
         long now = System.currentTimeMillis(); // 현재시간 받아오기
         Date date = new Date(now); // Date 객체 생성
-        SimpleDateFormat sdf = new SimpleDateFormat("MM-dd HH:mm:ss", Locale.KOREA);
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy.MM.dd-HH:mm:ss", Locale.KOREA);
         String nowTime = sdf.format(date);
 
 
@@ -828,33 +857,88 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
 //            msgB+=strB.get(i);
 //        }
 //        for (int i = 0; i < strH.size(); i++) {
-//            msgH += strH.get(i)+"\r\n";
+//            msgResult += strH.get(i)+"\r\n";
 //        }
-        msgH="14.982\r\n17.575\r\n15.55\r\n14.11\r\n13.44\r\n16.441\r\n";
+
+
+
+        msgResult =String.format("%.1f\r\n%.1f\r\n%.1f\r\n%.1f\r\n",20*(idx_g-1),20*(idx_p-1),20*(idx_r-1),20*(idx_h-1));
+        msgChart =String.format(Locale.KOREA,"%.1f\r\n%.1f\r\n%.1f\r\n%.1f\r\n",80*(idx_g-1),80*(idx_p-1),250*(idx_r-1),idx_h+3);
 
         try {
             File file = new File(Environment.getExternalStorageDirectory() + "/OneFileUrineCup");
+            File chartfile =new File(Environment.getExternalStorageDirectory() + "/OneFileUrineCup"+"/chart.txt");
+            File resultfile =new File(Environment.getExternalStorageDirectory() + "/OneFileUrineCup"+"/result.txt");
+            File huefile =new File(Environment.getExternalStorageDirectory() + "/OneFileUrineCup/"+"/hue_"+nowTime+".txt");
             if (!file.exists()) {
                 file.mkdir();
             }
 
-            if (!file.exists()) {
-                file.createNewFile();
+            if(!chartfile.exists()){
+                chartfile.createNewFile();
             }
-            FileWriter writer = new FileWriter(file + "/" + nowTime + ".txt");
+            if(!resultfile.exists()){
+                resultfile.createNewFile();
+            }
+            if(!huefile.exists()){
+                huefile.createNewFile();
+            }
+//            FileWriter writer = new FileWriter(file + "/result.txt");
+//            writer.append(msgResult);
+//            writer.append("\r\n");
+//            writer.flush();
+//            writer.close();
+//            strR.clear();
+//            strG.clear();
+//            strB.clear();
+//            strH.clear();
 
-            writer.append(msgH);
-            writer.append("\r\n");
 
-            writer.flush();
-            writer.close();
-            strR.clear();
-            strG.clear();
-            strB.clear();
-            strH.clear();
+            //////////////차트용 데이터 생성//////////////////
+//            FileReader reader1= new FileReader(file+"/chart.txt");
+//            BufferedReader br1=new BufferedReader(reader1);
+//            String line;
+//            String contents="";
+//            while ((line = br1.readLine()) != null) {
+//                contents+=(line);
+//                contents+="\r\n";
+//            }
+//            br1.close();
+//            reader1.close();
+//
+//            FileWriter writer1=  new FileWriter(file +"/chart.txt");
+//            writer1.append(contents);
+//            writer1.append(contents);
+//            writer1.append(msgChart);
+//            writer1.flush();
+//            writer1.close();
+            //////////////차트용 데이터 생성//////////////////
+
+            //////////////실험용 데이터 생성//////////////////
+//            FileReader reader2= new FileReader(file+"/hue.txt");
+//            BufferedReader br2=new BufferedReader(reader2);
+//            String line2;
+//            String contents2="";
+//            while ((line = br2.readLine()) != null) {
+//                contents2+=(line);
+//                contents2+="\r\n";
+//            }
+//            br2.close();
+//            reader2.close();
+
+            FileWriter writer2 = new FileWriter(huefile);
+            writer2.append(sdf.format(date)+"\r\n");
+            writer2.append("Time(s) | Glouc | Protein | RBC | PH |\r\n");
+            writer2.append(msg_hue);
+//            writer2.append(contents2);
+            writer2.flush();;
+            writer2.close();
+
+            //////////////실험용 데이터 생성//////////////////
 
         } catch (IOException e) {
             e.printStackTrace();
+            Toast.makeText(getApplicationContext(),e.toString(),Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -900,9 +984,9 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
         }
 
         for (int i = 0; i < 4; i++) {
-            bilirubin_p[i] = new Point(loc, -165 + step * i);
+            rbc_p[i] = new Point(loc, -165 + step * i);
             if (i >= 2) {
-                bilirubin_p[i] = new Point(loc, 30 + step * i);
+                rbc_p[i] = new Point(loc, 30 + step * i);
             }
 
             tl_x[i]=0.0;
@@ -911,9 +995,9 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
         }
 
         for(int i=0;i<5;i++){
-            urobilinogen_p[i]=new Point(-210 + step*i,loc);
+            ph_p[i]=new Point(-210 + step*i,loc);
             if(i>2){
-                urobilinogen_p[i]=new Point(-15 + step*i,loc);
+                ph_p[i]=new Point(-15 + step*i,loc);
             }
         }
 
@@ -936,7 +1020,7 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
 
                 case MESSAGE_TIMER_REPEAT:
 
-                    if (count > 60) {
+                    if (Timer - (count) < 0) {
                         tx1.setText("save Finished");
                         this.sendEmptyMessageDelayed(MESSAGE_TIMER_STOP, 1000);
 
@@ -944,24 +1028,21 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
 //                        writeToFile();
 
                         msg_rgb = "";
-                        msg_hue = "";
-                        msg_bilirubin = "";
+                        msg_rbc = "";
 
-                        double rst_bili = 0;
+                        double hue_G = 0,hue_P=0,hue_R=0,hue_H=0;
 
-                        for (int i = 0; i < hue_avg.size(); i++) {
-                            rst_bili += hue_avg.get(i);
+
+                        if(count%5==0) {
+                            hue_G=calculateHue.getH(rgbV_GLOUCOSE);
+                            hue_P=calculateHue.getH(rgbV_PROTEIN);
+                            hue_H=calculateHue.getH(rgbV_PH);
+                            hue_R=calculateHue.getH(rgbV_RBC);
+
+                            msg_hue += String.format(Locale.KOREA, " %4d %.2f %.2f %.2f %.2f\r\n", count, hue_G, hue_P, hue_R, hue_H);
+                            Toast.makeText(getApplicationContext(),String.format(Locale.KOREA,"%d seconds ",(int)(count)),Toast.LENGTH_SHORT).show();
                         }
-                        rst_bili = rst_bili / hue_avg.size();
 
-                        hue_avg.clear();
-
-
-//                        strR.add(String.format(Locale.KOREA,"%.1f ", rgbV_UROBILINOGEN[0]));
-//                        strG.add(String.format(Locale.KOREA,"%.1f ", rgbV_UROBILINOGEN[1]));
-//                        strB.add(String.format(Locale.KOREA,"%.1f ", rgbV_UROBILINOGEN[2]));
-                        strH.add(String.format(Locale.KOREA, "%.3f ", rst_bili));
-                        dbH.add(rst_bili);
 
                         tx1.setText("save remained : " + Integer.toString(count));
                         count += 1;
@@ -980,48 +1061,15 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
 
                     ///////////////////////////////////////////////////////////////////////////////반복되는부분///////////////////////////////////////////////////////////////////////
                     try {
-                        double hue_bilirubin = calculateHue.getH(rgbV_BILIRUBIN);
-                        double[] y_bilirubin = new double[4];
-                        double[] x_bilirubin = new double[4];
-                        for (int i = 0; i < 4; i++) {
-                            double[] avg = average_RGB((int) xb[i], (int) yb[i]);
-                            y_bilirubin[i] = calculateHue.getH(avg);
-                            x_bilirubin[i] = i + 1;
 
-                        }
-
-//                    Log.i(TAG,String.format("%.2f %.2f %.2f %.2f //////%.2f %.2f %.2f %.2f",yb[0],yb[1],yb[2],yb[3],y_bilirubin[0],y_bilirubin[1],y_bilirubin[2],y_bilirubin[3]));
+                        gloucose_cal();
+                        protein_cal();
+                        rbc_cal();
+                        ph_cal();
 
 
-                        HashMap<String, Double> trendline = null;
-                        trendline = calculateHue.getTrendLine(x_bilirubin, y_bilirubin);
-                        double incline = trendline.get("a");
-                        double intercept = trendline.get("b");
-                        graph_a = graph_a + incline;
 
-
-                        msg_rgb = "";
-                        msg_hue = "";
-                        String msg_Equation;
-                        msg_rgb = String.format(Locale.KOREA, "R : %.1f\nG: %.1f\nB: %.1f\n", rgbV_BILIRUBIN[0], rgbV_BILIRUBIN[1], rgbV_BILIRUBIN[2]);
-                        msg_hue = String.format(Locale.KOREA, "H: %.2f", hue_bilirubin);
-
-
-                        double graph_bili_a = graph_a / count;
-                        Log.i(TAG, String.format("%.2f %.2f %.2f", graph_bili_a, graph_a, incline));
-                        Log.i(TAG, Double.toString(graph_bili_a));
-                        Log.i(TAG, Double.toString(graph_a));
-                        if (graph_bili_a < 0) {
-                            msg_Equation = "y=" + (Double.parseDouble(String.format(Locale.KOREA, "%.2f", graph_bili_a)))
-                                    + "x" + (Double.parseDouble(String.format(Locale.KOREA, "%.2f", intercept)));
-                        } else {
-                            msg_Equation = "y=" + (Double.parseDouble(String.format(Locale.KOREA, "%.2f", graph_bili_a)))
-                                    + "x+" + (Double.parseDouble(String.format(Locale.KOREA, "%.2f", intercept)));
-                        }
-                        tx2.setText(msg_Equation);
-                    }catch (Exception e){
-                        e.printStackTrace();
-                    }
+                    }catch (Exception e){}
 
 
                     break;
@@ -1029,10 +1077,31 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
                 case MESSAGE_TIMER_STOP:
                     Toast.makeText(getApplicationContext(), "Timer Stoped", Toast.LENGTH_SHORT).show();
 
+
+                    hue_g=calculateHue.getH(rgbV_GLOUCOSE);
+                    hue_p=calculateHue.getH(rgbV_PROTEIN);
+                    hue_r=calculateHue.getH(rgbV_RBC);
+                    hue_h=calculateHue.getH(rgbV_PH);
+
+
+
+                    //결과.
+                    idx_g=getUrineIndex("gloucose",hue_g);
+                    idx_p=getUrineIndex("protein",hue_p);
+                    idx_r=getUrineIndex("rbc",hue_r);
+                    idx_h=getUrineIndex("ph",hue_h);
+
+
+                    if(idx_g<1) idx_g=1;
+                    if(idx_p<1) idx_p=1;
+                    if(idx_r<1) idx_r=1;
+                    if(idx_h<1) idx_h=1;
+                    Log.i("result:",String.format("%.1f,%.1f,%.1f,%.1f",hue_g,hue_p,hue_r,hue_h));
+                    Log.i("result:",String.format("%.1f,%.1f,%.1f,%.1f",idx_g,idx_p,idx_r,idx_h));
                     countflag = 0;
                     msg_rgb = "";
-                    msg_hue = "";
-                    msg_bilirubin = "";
+                    msg_rbc = "";
+//
                     hue_avg.clear();
 
 
@@ -1042,6 +1111,233 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
         }
 
     }
+
+    void rbc_cal(){
+        double hue_bilirubin = calculateHue.getH(rgbV_RBC);
+        double[] y_bilirubin = new double[4];
+        double[] x_bilirubin = new double[4];
+        for (int i = 0; i < 4; i++) {
+            double[] avg = average_RGB((int) xr[i], (int) yr[i]);
+            y_bilirubin[i] = calculateHue.getH(avg);
+            x_bilirubin[i] = i + 1;
+
+        }
+
+//                    Log.i(TAG,String.format("%.2f %.2f %.2f %.2f //////%.2f %.2f %.2f %.2f",yr[0],yr[1],yr[2],yr[3],y_bilirubin[0],y_bilirubin[1],y_bilirubin[2],y_bilirubin[3]));
+
+
+        HashMap<String, Double> trendline = null;
+        trendline = calculateHue.getTrendLine(x_bilirubin, y_bilirubin);
+        Double incline = trendline.get("a");
+        graph_rbc_b = trendline.get("b");
+
+
+           if(!incline.isNaN()){
+            rbc_incline += incline;
+        }
+
+
+
+        msg_rgb = "";
+
+        String msg_Equation;
+        msg_rgb = String.format(Locale.KOREA, "R : %.1f\nG: %.1f\nB: %.1f\n", rgbV_RBC[0], rgbV_RBC[1], rgbV_RBC[2]);
+
+
+
+        graph_rbc_a = rbc_incline / count;
+        String fo=String.format(Locale.KOREA," bili %.2f %.2f %.2f", graph_rbc_a, rbc_incline, incline);
+//                        System.out.print("bili:");
+//                        System.out.println(graph_rbc_a);
+//                        System.out.println(count);
+
+        Log.i(TAG, fo);
+        Log.i(TAG, Double.toString(graph_rbc_a));
+
+
+//                        Log.i(TAG, Double.toString(rbc_incline));
+        if (graph_rbc_b < 0) {
+            msg_Equation = "y=" + (Double.parseDouble(String.format(Locale.KOREA, "%.2f", graph_rbc_a)))
+                    + "x" + (Double.parseDouble(String.format(Locale.KOREA, "%.2f", graph_rbc_b)));
+        } else {
+            msg_Equation = "y=" + (Double.parseDouble(String.format(Locale.KOREA, "%.2f", graph_rbc_a)))
+                    + "x+" + (Double.parseDouble(String.format(Locale.KOREA, "%.2f", graph_rbc_b)));
+        }
+        tx3.setText(msg_Equation);
+    }
+    void ph_cal(){
+        double hue_ph = calculateHue.getH(rgbV_PH);
+        double[] y_ph = new double[4];
+        double[] x_ph = new double[4];
+        for (int i = 0; i < 4; i++) {
+            double[] avg = average_RGB((int) xh[i], (int) yh[i]);
+            y_ph[i] = calculateHue.getH(avg);
+            x_ph[i] = i + 1;
+
+        }
+
+//                    Log.i(TAG,String.format("%.2f %.2f %.2f %.2f //////%.2f %.2f %.2f %.2f",yr[0],yr[1],yr[2],yr[3],y_bilirubin[0],y_bilirubin[1],y_bilirubin[2],y_bilirubin[3]));
+
+
+        HashMap<String, Double> trendline = null;
+        trendline = calculateHue.getTrendLine(x_ph, y_ph);
+        Double incline = trendline.get("a");
+        graph_ph_b=trendline.get("b");
+
+        if(!incline.isNaN())
+        {
+            ph_incline += incline;
+        }
+
+        msg_rgb = "";
+
+        String msg_Equation;
+        msg_rgb = String.format(Locale.KOREA, "R : %.1f\nG: %.1f\nB: %.1f\n", rgbV_PH[0], rgbV_PH[1], rgbV_PH[2]);
+
+
+
+        graph_ph_a =(ph_incline / count);
+
+//                        System.out.print("bili:");
+//                        System.out.println(graph_rbc_a);
+//                        System.out.println(count);
+
+        Log.i(TAG, String.format("uro %.2f %.2f %.2f", graph_ph_a, ph_incline, incline));
+        Log.i(TAG, Double.toString(graph_ph_a));
+//                        Log.i(TAG, Double.toString(rbc_incline));
+        if (graph_ph_b < 0) {
+            msg_Equation = "y=" + (Double.parseDouble(String.format(Locale.KOREA, "%.2f", graph_ph_a)))
+                    + "x" + (Double.parseDouble(String.format(Locale.KOREA, "%.2f", graph_ph_b)));
+        } else {
+            msg_Equation = "y=" + (Double.parseDouble(String.format(Locale.KOREA, "%.2f", graph_ph_a)))
+                    + "x+" + (Double.parseDouble(String.format(Locale.KOREA, "%.2f", graph_ph_b)));
+        }
+        tx4.setText(msg_Equation);
+    }
+
+    void gloucose_cal(){
+        double hue_gloucose = calculateHue.getH(rgbV_GLOUCOSE);
+        double[] y_gloucose = new double[4];
+        double[] x_gloucose = new double[4];
+        for (int i = 0; i < 4; i++) {
+            double[] avg = average_RGB((int) xg[i], (int) yg[i]);
+            y_gloucose[i] = calculateHue.getH(avg);
+            x_gloucose[i] = i + 1;
+
+        }
+
+//                    Log.i(TAG,String.format("%.2f %.2f %.2f %.2f //////%.2f %.2f %.2f %.2f",yr[0],yr[1],yr[2],yr[3],y_bilirubin[0],y_bilirubin[1],y_bilirubin[2],y_bilirubin[3]));
+
+
+        HashMap<String, Double> trendline = null;
+        trendline = calculateHue.getTrendLine(x_gloucose, y_gloucose);
+        Double incline = trendline.get("a");
+        graph_glou_b = trendline.get("b");
+        if(!incline.isNaN())
+        {
+            glou_incline += incline;
+        }
+
+        msg_rgb = "";
+
+        String msg_Equation;
+//        msg_rgb = String.format(Locale.KOREA, "R : %.1f\nG: %.1f\nB: %.1f\n", rgbV_PH[0], rgbV_PH[1], rgbV_PH[2]);
+//        msg_hue = String.format(Locale.KOREA, "H: %.2f", hue_urobilinogen);
+
+
+        graph_glou_a = glou_incline / count;
+
+//                        System.out.print("bili:");
+//                        System.out.println(graph_rbc_a);
+//                        System.out.println(count);
+
+        Log.i(TAG, String.format("glou %.2f %.2f %.2f", graph_glou_a, glou_incline, incline));
+        Log.i(TAG, Double.toString(graph_ph_a));
+
+//                        Log.i(TAG, Double.toString(rbc_incline));
+        if (graph_glou_b < 0) {
+
+
+            msg_Equation = "y=" + (Double.parseDouble(String.format(Locale.KOREA, "%.2f", graph_glou_a)))
+                    + "x" + (Double.parseDouble(String.format(Locale.KOREA, "%.2f", graph_glou_b)));
+        } else {
+            msg_Equation = "y=" + (Double.parseDouble(String.format(Locale.KOREA, "%.2f", graph_glou_a)))
+                    + "x+" + (Double.parseDouble(String.format(Locale.KOREA, "%.2f", graph_glou_b)));
+        }
+        tx1.setText(msg_Equation);
+    }
+    void protein_cal(){
+        double hue_protein = calculateHue.getH(rgbV_PROTEIN);
+        double[] y_protein = new double[4];
+        double[] x_protein = new double[4];
+        for (int i = 0; i < 4; i++) {
+            double[] avg = average_RGB((int) xp[i], (int) yp[i]);
+            y_protein[i] = calculateHue.getH(avg);
+            x_protein[i] = i + 1;
+
+        }
+
+//                    Log.i(TAG,String.format("%.2f %.2f %.2f %.2f //////%.2f %.2f %.2f %.2f",yr[0],yr[1],yr[2],yr[3],y_bilirubin[0],y_bilirubin[1],y_bilirubin[2],y_bilirubin[3]));
+
+
+        HashMap<String, Double> trendline = null;
+        trendline = calculateHue.getTrendLine(x_protein, y_protein);
+        Double incline = trendline.get("a");
+        graph_prot_b = trendline.get("b");
+        if(!incline.isNaN())
+        {
+            prot_incline += incline;
+        }
+
+        msg_rgb = "";
+
+        String msg_Equation;
+        msg_rgb = String.format(Locale.KOREA, "R : %.1f\nG: %.1f\nB: %.1f\n", rgbV_PROTEIN[0], rgbV_PROTEIN[1], rgbV_PROTEIN[2]);
+
+
+
+        graph_prot_a = prot_incline /(double) count;
+
+
+//        Log.i(TAG, String.format("%.2f %.2f %.2f", graph_ph_a, ph_incline, incline));
+//        Log.i(TAG, Double.toString(graph_ph_a));
+//                        Log.i(TAG, Double.toString(rbc_incline));
+        if (graph_prot_b < 0) {
+            msg_Equation = "y=" + (Double.parseDouble(String.format(Locale.KOREA, "%.2f", graph_prot_a)))
+                    + "x" + (Double.parseDouble(String.format(Locale.KOREA, "%.2f", graph_prot_b)));
+        } else {
+            msg_Equation = "y=" + (Double.parseDouble(String.format(Locale.KOREA, "%.2f", graph_prot_a)))
+                    + "x+" + (Double.parseDouble(String.format(Locale.KOREA, "%.2f", graph_prot_b)));
+        }
+        tx2.setText(msg_Equation);
+    }
+
+    double getUrineIndex(String a,double hue){
+
+        double index=0;
+        //urine_index= (hue-interept)/incline
+        switch (a){
+            case "gloucose":
+                index=(hue-graph_glou_b)/graph_glou_a;
+                break;
+            case "protein":
+                index=(hue-graph_prot_b)/graph_prot_a;
+                break;
+            case "rbc":
+                index=(hue-graph_rbc_b)/graph_rbc_a;
+                break;
+            case "ph":
+                index=(hue-graph_ph_b)/graph_ph_a;
+                break;
+            default :
+                index=-1;
+//                return -1;
+        }
+        return index;
+    }
+
+
+
 
     double[] average_RGB(int x, int y) {
 

@@ -1,16 +1,12 @@
 package com.example.urineanalysis;
 
-import android.content.Intent;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.Color;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.ImageView;
-import android.widget.TabHost;
 import android.widget.TextView;
 
 import com.anychart.APIlib;
@@ -18,9 +14,7 @@ import com.anychart.AnyChart;
 import com.anychart.AnyChartView;
 import com.anychart.chart.common.dataentry.DataEntry;
 import com.anychart.chart.common.dataentry.SingleValueDataSet;
-import com.anychart.chart.common.dataentry.ValueDataEntry;
 import com.anychart.charts.LinearGauge;
-import com.anychart.charts.Pie;
 import com.anychart.enums.Anchor;
 import com.anychart.enums.Layout;
 import com.anychart.enums.MarkerType;
@@ -29,7 +23,6 @@ import com.anychart.enums.Position;
 import com.anychart.scales.OrdinalColor;
 import com.example.urineanalysis.utils.FolderUtil;
 
-import org.opencv.android.Utils;
 import org.opencv.core.Mat;
 
 import java.util.ArrayList;
@@ -41,12 +34,12 @@ public class ResultActivity extends AppCompatActivity {
     Mat mRgba;
     TextView tv;
     ImageView BigImate;
-    AnyChartView anyChartView_G,anyChartView_P,anyChartView_B,anyChartView_U;
+    AnyChartView anyChartView_G,anyChartView_P,anyChartView_B, anyChartView_H;
 
     ArrayList<Double>list_gloucose=new ArrayList<>();
     ArrayList<Double>list_protein=new ArrayList<>();
-    ArrayList<Double>list_bilirubin=new ArrayList<>();
-    ArrayList<Double>list_urobilinogen=new ArrayList<>();
+    ArrayList<Double> list_rbc =new ArrayList<>();
+    ArrayList<Double> list_ph =new ArrayList<>();
 
     final String TAG= "ResultActivity_TAG";
 
@@ -58,8 +51,8 @@ public class ResultActivity extends AppCompatActivity {
         setContentView(R.layout.activity_result);
         anyChartView_G = findViewById(R.id.rst_chart_view_gloucose);
         anyChartView_P = findViewById(R.id.rst_chart_view_protein);
-        anyChartView_B = findViewById(R.id.rst_chart_view_bilirubin);
-        anyChartView_U = findViewById(R.id.rst_chart_view_urobilinogen);
+        anyChartView_B = findViewById(R.id.rst_chart_view_rbc);
+        anyChartView_H = findViewById(R.id.rst_chart_view_ph);
 
         anyChartView_G.setProgressBar(findViewById(R.id.rst_progressBar));
 
@@ -68,11 +61,11 @@ public class ResultActivity extends AppCompatActivity {
         List<DataEntry> seriesData = new ArrayList<>();
         try {
 
-            list_bilirubin = folderUtil.fileRead("bilirubin.txt");
-            list_gloucose = folderUtil.fileRead("gloucose.txt");
-            list_protein = folderUtil.fileRead("protein.txt");
-            list_urobilinogen = folderUtil.fileRead("urobilinogen.txt");
-            Log.i(TAG, Integer.toString(list_urobilinogen.size()));
+            list_rbc = folderUtil.fileRead("result.txt");
+            list_gloucose = folderUtil.fileRead("result.txt");
+            list_protein = folderUtil.fileRead("result.txt");
+            list_ph = folderUtil.fileRead("result.txt");
+//            Log.i(TAG, Integer.toString(list_ph.size()));
 
 
         } catch (Exception e) {
@@ -80,11 +73,11 @@ public class ResultActivity extends AppCompatActivity {
         }
         //차트에 사용할 데이터 전처리}}}
 
-
+        Log.i(TAG,String.format("%.2f %.2f %.2f %.2f",list_gloucose.get(0),list_gloucose.get(1),list_gloucose.get(2),list_gloucose.get(3)));
         draw_g();
         draw_p();
-        draw_b();
-        draw_u();
+        draw_r();
+        draw_h();
     }
 
     public void draw_g(){
@@ -94,12 +87,14 @@ public class ResultActivity extends AppCompatActivity {
         LinearGauge linearGauge1 = AnyChart.linear();
 
         double tmp=0.0;
-        for (int i = 0; i < list_gloucose.size(); i++) {
-            tmp += list_gloucose.get(i);
-        }
+//        for (int i = 0; i < list_gloucose.size(); i++) {
+//            tmp += list_gloucose.get(i);
+//        }
+        tmp=list_gloucose.get(0);
 
 
-        linearGauge1.data(new SingleValueDataSet(new Double[]{tmp / list_gloucose.size()}));
+
+        linearGauge1.data(new SingleValueDataSet(new Double[]{tmp}));
 
 
         linearGauge1.layout(Layout.HORIZONTAL);
@@ -180,19 +175,19 @@ public class ResultActivity extends AppCompatActivity {
 
         anyChartView.setChart(linearGauge1);
     }
-    public void draw_b(){
-        AnyChartView anyChartView3 = findViewById(R.id.rst_chart_view_bilirubin);
+    public void draw_r(){
+        AnyChartView anyChartView3 = findViewById(R.id.rst_chart_view_rbc);
         APIlib.getInstance().setActiveAnyChartView(anyChartView3);
 
         LinearGauge linearGauge3 = AnyChart.linear();
 
         double tmp=0.0;
-        for (int i = 0; i < list_bilirubin.size(); i++) {
-            tmp += list_bilirubin.get(i);
-        }
+//        for (int i = 0; i < list_rbc.size(); i++) {
+//            tmp += list_rbc.get(i);
+//        }
 
-
-        linearGauge3.data(new SingleValueDataSet(new Double[]{tmp / list_bilirubin.size()}));
+        tmp=list_rbc.get(2);
+        linearGauge3.data(new SingleValueDataSet(new Double[]{tmp}));
 
 
         linearGauge3.layout(Layout.HORIZONTAL);
@@ -206,7 +201,7 @@ public class ResultActivity extends AppCompatActivity {
                 .offsetX("50px")
                 .fontColor("black")
                 .fontSize(17);
-        linearGauge3.label(0).text("빌리루빈");
+        linearGauge3.label(0).text("RBC(적혈구)");
 
 
         //좌 문구
@@ -273,8 +268,8 @@ public class ResultActivity extends AppCompatActivity {
 
         anyChartView3.setChart(linearGauge3);
     }
-    public void draw_u(){
-        AnyChartView anyChartView4 = findViewById(R.id.rst_chart_view_urobilinogen);
+    public void draw_h(){
+        AnyChartView anyChartView4 = findViewById(R.id.rst_chart_view_ph);
         APIlib.getInstance().setActiveAnyChartView(anyChartView4);
 
 
@@ -284,11 +279,11 @@ public class ResultActivity extends AppCompatActivity {
 
         double tmp=0.0;
 
-        for (int i = 0; i < list_urobilinogen.size(); i++) {
-            tmp += list_urobilinogen.get(i);
-        }
-
-        linearGauge4.data(new SingleValueDataSet(new Double[]{tmp / list_urobilinogen.size()}));
+//        for (int i = 0; i < list_ph.size(); i++) {
+//            tmp += list_ph.get(i);
+//        }
+        tmp=list_ph.get(3);
+        linearGauge4.data(new SingleValueDataSet(new Double[]{tmp}));
         linearGauge4.layout(Layout.HORIZONTAL);
 
         //제목
@@ -299,7 +294,7 @@ public class ResultActivity extends AppCompatActivity {
                 .offsetX("50px")
                 .fontColor("black")
                 .fontSize(17);
-        linearGauge4.label(0).text("우로빌리노겐");
+        linearGauge4.label(0).text("PH");
         //좌 문구
         linearGauge4.label(1)
                 .position(Position.LEFT_CENTER)
@@ -372,16 +367,17 @@ public class ResultActivity extends AppCompatActivity {
 
 
 
-
         LinearGauge linearGauge2=AnyChart.linear();
 
         double tmp=0.0;
 
-        for (int i = 0; i < list_protein.size(); i++) {
-            tmp += list_protein.get(i);
-        }
+//        for (int i = 0; i < list_protein.size(); i++) {
+//            tmp += list_protein.get(i);
+//        }
 
-        linearGauge2.data(new SingleValueDataSet(new Double[]{tmp / list_protein.size()}));
+        tmp=list_protein.get(1);
+
+        linearGauge2.data(new SingleValueDataSet(new Double[]{tmp}));
         linearGauge2.layout(Layout.HORIZONTAL);
 
         //제목
@@ -422,6 +418,8 @@ public class ResultActivity extends AppCompatActivity {
                 "{ from: 50, to: 100, color: ['#EB7A02','#D81E05'] }"
 
         });
+
+        //수거목록 :wifi- 인터넷 모뎀기, TV 세탑박스랑 리모컨.
 
         linearGauge2.scaleBar(0)
                 .width("5%")

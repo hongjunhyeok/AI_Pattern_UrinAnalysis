@@ -132,18 +132,22 @@ public class MainActivity extends AppCompatActivity {
          //https://black-jin0427.tistory.com/120 참고했음.
 
 
-        if(resultCode!= Activity.RESULT_OK){
-            Toast.makeText(this, "취소 되었습니다.", Toast.LENGTH_SHORT).show();
 
-            if(tempFile != null) {
-                if (tempFile.exists()) {
-                    if (tempFile.delete()) {
-                        Log.e(TAG, tempFile.getAbsolutePath() + " 삭제 성공");
-                        tempFile = null;
+        if (resultCode != Activity.RESULT_OK) {
+
+                Toast.makeText(this, "취소 되었습니다.", Toast.LENGTH_SHORT).show();
+
+                if (tempFile != null) {
+                    if (tempFile.exists()) {
+                        if (tempFile.delete()) {
+                            Log.e(TAG, tempFile.getAbsolutePath() + " 삭제 성공");
+                            tempFile = null;
+                        }
                     }
                 }
-            }
         }
+
+
 
 
         //분석뒤 -> 앨범으로 자동이동

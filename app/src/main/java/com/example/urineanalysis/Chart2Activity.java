@@ -1,12 +1,10 @@
 package com.example.urineanalysis;
 
-import android.hardware.Camera;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Window;
 import android.view.WindowManager;
-import android.widget.ProgressBar;
 
 
 import com.anychart.AnyChart;
@@ -21,7 +19,6 @@ import com.anychart.data.Set;
 import com.anychart.data.Mapping;
 import com.anychart.enums.HoverMode;
 import com.anychart.enums.MarkerType;
-import com.anychart.enums.ScaleComparisonMode;
 import com.anychart.enums.ScaleStackMode;
 import com.anychart.enums.TooltipDisplayMode;
 import com.anychart.graphics.vector.Stroke;
@@ -34,8 +31,8 @@ public class Chart2Activity extends AppCompatActivity {
 
     ArrayList<Double>list_gloucose=new ArrayList<>();
     ArrayList<Double>list_protein=new ArrayList<>();
-    ArrayList<Double>list_bilirubin=new ArrayList<>();
-    ArrayList<Double>list_urobilinogen=new ArrayList<>();
+    ArrayList<Double> list_rbc =new ArrayList<>();
+    ArrayList<Double>list_ph=new ArrayList<>();
     public final String TAG="Chart2Activity_TAG";
 
 
@@ -54,16 +51,16 @@ public class Chart2Activity extends AppCompatActivity {
         List<DataEntry> seriesData=new ArrayList<>();
         try {
 
-            list_bilirubin=folderUtil.fileRead("bilirubin.txt");
-            list_gloucose=folderUtil.fileRead("gloucose.txt");
-            list_protein=folderUtil.fileRead("protein.txt");
-            list_urobilinogen=folderUtil.fileRead("urobilinogen.txt");
-            Log.i(TAG,Integer.toString(list_urobilinogen.size()));
+            list_rbc =folderUtil.fileRead("chart.txt");
+            list_gloucose=folderUtil.fileRead("chart.txt");
+            list_protein=folderUtil.fileRead("chart.txt");
+            list_ph=folderUtil.fileRead("chart.txt");
+            Log.i(TAG,Integer.toString(list_ph.size()));
 
-            for(int i=0;i<list_urobilinogen.size();i++){
-                seriesData.add(new CustomDataEntry(String.format("%d주",i+1),list_gloucose.get(i),list_protein.get(i),list_bilirubin.get(i),list_urobilinogen.get(i)));
-            }
-
+//            for(int i=0;i<list_ph.size();i++){
+//                seriesData.add(new CustomDataEntry(String.format("%d주",i+1),list_gloucose.get(i),list_protein.get(i), list_rbc.get(i),list_ph.get(i)));
+//            }
+            seriesData.add(new CustomDataEntry(String.format("%d주",1),list_gloucose.get(0),list_protein.get(1), list_rbc.get(2),list_ph.get(3)));
             set.data(seriesData);
 
         }catch(Exception e){
@@ -125,7 +122,7 @@ public class Chart2Activity extends AppCompatActivity {
         series2.markers().zIndex(100d);
 
         Area series3 = areaChart.area(series3Data);
-        series3.name("빌리루빈");
+        series3.name("적혈구");
         series3.stroke("3 #fff");
         series3.hovered().stroke("3 #fff");
         series3.hovered().markers().enabled(true);
@@ -136,7 +133,7 @@ public class Chart2Activity extends AppCompatActivity {
         series3.markers().zIndex(100d);
 
         Area series4 = areaChart.area(series4Data);
-        series4.name("우로빌리노겐");
+        series4.name("PH");
         series4.stroke("3 #fff");
         series4.hovered().stroke("3 #fff");
         series4.hovered().markers().enabled(true);
@@ -151,6 +148,7 @@ public class Chart2Activity extends AppCompatActivity {
         areaChart.legend().enabled(true);
         areaChart.legend().fontSize(13d);
         areaChart.legend().padding(0d, 0d, 20d, 0d);
+
 
         areaChart.xAxis(0).title(false);
         areaChart.yAxis(0).title("농도(100ml당 단위mg)");

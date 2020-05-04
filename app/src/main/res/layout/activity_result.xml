@@ -20,7 +20,7 @@
                     android:layout_weight="1"
                     />
                 <com.anychart.AnyChartView
-                    android:id="@+id/rst_chart_view_urobilinogen"
+                    android:id="@+id/rst_chart_view_ph"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:layout_weight="1"
@@ -44,7 +44,7 @@
                     />
 
                 <com.anychart.AnyChartView
-                    android:id="@+id/rst_chart_view_bilirubin"
+                    android:id="@+id/rst_chart_view_rbc"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:layout_weight="1"

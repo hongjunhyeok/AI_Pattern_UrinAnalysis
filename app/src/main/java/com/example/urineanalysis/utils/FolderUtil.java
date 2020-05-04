@@ -74,7 +74,7 @@ public class FolderUtil {
             bufferedReader.close();
             fileReader.close();
 
-            Log.i(TAG,String.format("Result %.3f",avg/counter));
+//            Log.i(TAG,String.format("Result %.3f",avg/counter));
 
         } catch(FileNotFoundException ex) {
             Log.i(TAG,ex.toString());
