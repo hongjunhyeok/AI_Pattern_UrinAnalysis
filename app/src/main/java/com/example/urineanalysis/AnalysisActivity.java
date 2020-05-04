@@ -43,6 +43,7 @@ import org.opencv.android.CameraBridgeViewBase;
 import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
 import org.opencv.android.Utils;
+import org.opencv.core.CvException;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfRect;
@@ -56,6 +57,7 @@ import org.opencv.objdetect.CascadeClassifier;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -121,8 +123,8 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
     public int time = 0;
     public double hue_value=0.0;
 
-
-
+    Bitmap bm=null;
+    Bitmap bmp=null;
 
     int count = 0;
 
@@ -278,6 +280,59 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
 
 //        drawPoint();
 
+
+        bt_cal.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+                //촬영한 비트맵이 존재하면
+                if(bmp!=null){
+
+
+                    //비트맵 복사본을 만들고
+                    final Bitmap mbitmap= bmp;
+                    Utils.bitmapToMat(mbitmap,mRgba);
+
+
+                    //복사본을 mat형식으로 변환한뒤 패턴인식
+                    if(mJavaDetector!=null){
+
+                        MatOfRect bubble_rect = new MatOfRect();
+                        mJavaDetector.detectMultiScale(mRgba,bubble_rect,1.5,1);
+
+                        bubble_array=bubble_rect.toArray();
+
+                        for(int i =0; i<bubble_array.length;i++){
+                            tl.x = bubble_array[i].tl().x;
+                            tl.y = bubble_array[i].tl().y;
+                            br.x = bubble_array[i].br().x;
+                            br.y = bubble_array[i].br().y;
+
+                            Imgproc.rectangle(mRgba,new Point(tl.x,tl.y),new Point(br.x,br.y),new Scalar(255,255,255),2);
+                        }
+
+
+                        //인식후 mat을 Bitmap으로 변환후 이미지 표시.
+                        Utils.matToBitmap(mRgba,mbitmap);
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                ImageView iv= findViewById(R.id.imageView1);
+                                iv.setImageBitmap(mbitmap);
+                            }
+                        });
+
+                        
+
+
+
+                    }
+                }else{
+                    Toast.makeText(getApplicationContext(),"이미지없음",Toast.LENGTH_SHORT).show();
+
+                }
+            }
+        });
         btn_back.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -318,56 +373,98 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
         });
 
 
+
         btn_start.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-//                Intent intent = new Intent(Intent.ACTION_PICK);
-//                intent.setType(MediaStore.Images.Media.CONTENT_TYPE);
-//                startActivityForResult(intent, 1111);
-
 
                 tmp=true;
                 writeFlag=true;
                 mViewMode = VIEW_MODE_START;
-
-
-//                pb.setVisibility(View.VISIBLE);
                 timerHandler.sendEmptyMessage(MESSAGE_TIMER_START);
 
-//                Timer += 10;
 
-                CalculateHue calculateHue = new CalculateHue();
-                double hue_bilirubin = calculateHue.getH(rgbV_BILIRUBIN);
 
-                double[] y_bilirubin = new double[4];
-                double[] x_bilirubin = new double[4];
-                for (int i = 0; i < 4; i++) {
-                    y_bilirubin[i] = calculateHue.getH(rgbV_BILIRUBIN);
-                    x_bilirubin[i] = i + 1;
+
+                // 분석할 이미지 생성
+                bmp = null;
+                Mat subimg = mRgba;
+                try {
+                    bmp = Bitmap.createBitmap(subimg.cols(), subimg.rows(), Bitmap.Config.ARGB_8888);
+                    Utils.matToBitmap(subimg, bmp);
+                } catch (CvException e) {
+                    Log.d(TAG, e.getMessage());
                 }
-                HashMap<String, Double> trendline = null;
-                trendline = calculateHue.getTrendLine(x_bilirubin, y_bilirubin);
 
 
-                double incline = trendline.get("a");
-                double intercept = trendline.get("b");
-
-                msg_rgb = "";
-                msg_hue = "";
-                String msg_Equation;
-
-                msg_rgb = String.format(Locale.KOREA, "R : %.1f\nG: %.1f\nB: %.1f\n", rgbV_BILIRUBIN[0], rgbV_BILIRUBIN[1], rgbV_BILIRUBIN[2]);
-                msg_hue = String.format(Locale.KOREA, "H: %.2f", hue_bilirubin);
+                // 이미지 촬영후 필요없는 비디오부분 비활성화
+                final Bitmap picture =bmp;
+                mOpenCvCameraView.disableView();
+                mOpenCvCameraView.setVisibility(View.INVISIBLE);
 
 
-                if (intercept < 0) {
-                    msg_Equation = "y=" + (Double.parseDouble(String.format(Locale.KOREA, "%.2f", incline)))
-                            + "x" + (Double.parseDouble(String.format(Locale.KOREA, "%.2f", intercept)));
-                } else {
-                    msg_Equation = "y=" + (Double.parseDouble(String.format(Locale.KOREA, "%.2f", incline)))
-                            + "x+" + (Double.parseDouble(String.format(Locale.KOREA, "%.2f", intercept)));
+
+                // MainActivity가 아니므로 Thread를 통해서 이미지뷰에 이미지 입힘.
+                runOnUiThread(new Runnable() {
+
+                    @Override
+                    public void run() {
+                        ImageView iv = (ImageView) findViewById(R.id.imageView1);
+                        iv.setImageBitmap(picture);
+                        Log.i(TAG,"RunOnUIThread");
+                        bt_cal.setEnabled(true);
+                    }
+                });
+                subimg.release();
+//                mRgba.release();
+                FileOutputStream out = null;
+
+                long now = System.currentTimeMillis();
+                Date date = new Date(now);
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyy.MM.dd.-HH:mm:ss", Locale.KOREA);
+                String filename = "Screenshot_" + sdf.format(date) + ".jpg";
+
+
+
+                File sd = new File(Environment.getExternalStorageDirectory().getPath() + "/UrineImages/");
+
+
+
+                boolean success = true;
+                if (!sd.exists()) {
+                    success = sd.mkdir();
                 }
-                tx2.setText(msg_Equation);
+                if (success) {
+                    File dest = new File(sd, filename);
+                    try {
+                        out = new FileOutputStream(dest);
+
+                        bmp.compress(Bitmap.CompressFormat.JPEG, 100, out);
+
+
+                        // sendBroadCast :: 시스템db에 이미지가 있다는 것을 전달. (나중에 검색하기위해서)
+                        getApplicationContext().sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(dest)));
+                    } catch (NullPointerException e) {
+                        e.printStackTrace();
+                        Log.d(TAG, e.getMessage());
+                    } catch (FileNotFoundException e) {
+                        e.printStackTrace();
+                        Log.d(TAG, e.getMessage());
+
+                    } finally {
+                        try {
+                            if (out != null) {
+                                out.close();
+                                Log.d(TAG, "OK!!");
+                            }
+                        } catch (IOException e) {
+                            Log.d(TAG, e.getMessage() + "Error");
+                            e.printStackTrace();
+                        }
+                    }
+                }
+
+
 
 
             }
@@ -469,7 +566,7 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
 
                         Mat mRgbaT=new Mat(mRgba,roi);
 
-                        final Bitmap bm= Bitmap.createBitmap(mRgbaT.cols(), mRgbaT.rows(),Bitmap.Config.ARGB_8888);
+                        bm= Bitmap.createBitmap(mRgbaT.cols(), mRgbaT.rows(),Bitmap.Config.ARGB_8888);
                         Utils.matToBitmap(mRgbaT,bm);
 
                         runOnUiThread(new Runnable() {
@@ -547,7 +644,7 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
                     Log.i(TAG, "OpenCV loaded successfully");
 
                     try {
-                        InputStream is = getResources().openRawResource(R.raw.colorband3);
+                        InputStream is = getResources().openRawResource(R.raw.cascade_circle);
 
 
 
