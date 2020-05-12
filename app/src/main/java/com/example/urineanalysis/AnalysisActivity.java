@@ -13,6 +13,7 @@ import android.os.Build;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
+import android.provider.ContactsContract;
 import android.support.annotation.NonNull;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
@@ -24,6 +25,7 @@ import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -112,7 +114,8 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
     Point[] rbc_p = new Point[4];
     Point[] ph_p = new Point[5];
 
-
+    Point tl=new Point(0,0);
+    Point br=new Point(0,0);
     double[] rgbV_GLOUCOSE = new double[3];
     double[] rgbV_PROTEIN = new double[3];
     double[] rgbV_RBC = new double[3];
@@ -354,7 +357,7 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
             public void onClick(View v) {
 
                 try {
-                    mViewMode = VIEW_MODE_START;
+//                    mViewMode = VIEW_MODE_START;
 
                     timerHandler.sendEmptyMessage(MESSAGE_TIMER_START);
 
@@ -487,12 +490,8 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
                 break;
             case VIEW_MODE_INIT:
 
-                Imgproc.rectangle(mRgba,new Point(900,300),new Point(950,350),new Scalar(255,255,255),2,1);
 
-                double[] tmpavg=average_RGB(925,325);
-                double[] rgb=mRgba.get(325,925);
-                double rst=calculateHue.getH(tmpavg);
-                Imgproc.putText(mRgba,String.format("RGB :%.1f %.1f %.1f H: %.3f",rgb[0],rgb[1],rgb[2],rst),new Point(850,300),1,2,new Scalar(255,255,255));
+
                 break;
 
         }
@@ -1020,12 +1019,64 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
 
                 case MESSAGE_TIMER_REPEAT:
 
+                    Mat subimg=mRgba;
+                    if(!mOpenCvCameraView.isEnabled()) {
+                        mOpenCvCameraView.enableView();
+                        mOpenCvCameraView.setVisibility(View.VISIBLE);
+                    }
+
                     if (Timer - (count) < 0) {
                         tx1.setText("save Finished");
                         this.sendEmptyMessageDelayed(MESSAGE_TIMER_STOP, 1000);
 
                     } else {
 //                        writeToFile();
+
+
+                        if(mJavaDetector!=null){
+
+
+                            MatOfRect bubble_rect=new MatOfRect();
+                            mJavaDetector.detectMultiScale(subimg,bubble_rect,2,1);
+                            bubble_array=bubble_rect.toArray();
+
+                            for(int i=0;i<bubble_array.length;i++){
+                                tl.x = bubble_array[i].tl().x;
+                                tl.y = bubble_array[i].tl().y;
+                                br.x = bubble_array[i].br().x;
+                                br.y = bubble_array[i].br().y;
+
+                                Imgproc.rectangle(mRgba,new Point(tl.x,tl.y),new Point(br.x,br.y),new Scalar(255,255,255),2);
+                            }
+
+                            doProcess();
+                        }
+                        Bitmap bmp=null;
+
+
+                        try {
+                            bmp = Bitmap.createBitmap(subimg.cols(), subimg.rows(), Bitmap.Config.ARGB_8888);
+                            Utils.matToBitmap(subimg, bmp);
+                        } catch (CvException e) {
+                            Log.d(TAG, e.getMessage());
+                        }
+
+                        final Bitmap picture =bmp;
+
+//                        mOpenCvCameraView.disableView();
+//                        mOpenCvCameraView.setVisibility(View.INVISIBLE);
+                        runOnUiThread(new Runnable() {
+
+                            @Override
+                            public void run() {
+                                ImageView iv = (ImageView) findViewById(R.id.imageView1);
+                                iv.setVisibility(View.VISIBLE);
+
+                                iv.setImageBitmap(picture);
+                                Log.i(TAG,"RunOnUIThread");
+
+                            }
+                        });
 
                         msg_rgb = "";
                         msg_rbc = "";
@@ -1034,30 +1085,30 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
 
 
                         if(count%5==0) {
-                            hue_G=calculateHue.getH(rgbV_GLOUCOSE);
-                            hue_P=calculateHue.getH(rgbV_PROTEIN);
-                            hue_H=calculateHue.getH(rgbV_PH);
-                            hue_R=calculateHue.getH(rgbV_RBC);
 
-                            msg_hue += String.format(Locale.KOREA, " %4d %.2f %.2f %.2f %.2f\r\n", count, hue_G, hue_P, hue_R, hue_H);
-                            Toast.makeText(getApplicationContext(),String.format(Locale.KOREA,"%d seconds ",(int)(count)),Toast.LENGTH_SHORT).show();
+                            try {
+                                hue_G = calculateHue.getH(rgbV_GLOUCOSE);
+                                hue_P = calculateHue.getH(rgbV_PROTEIN);
+                                hue_H = calculateHue.getH(rgbV_PH);
+                                hue_R = calculateHue.getH(rgbV_RBC);
+
+                                msg_hue += String.format(Locale.KOREA, " %4d %.2f %.2f %.2f %.2f\r\n", count, hue_G, hue_P, hue_R, hue_H);
+                                Toast.makeText(getApplicationContext(), String.format(Locale.KOREA, "%d seconds ", (int) (count)), Toast.LENGTH_SHORT).show();
+                            }catch (Exception e){
+                                e.printStackTrace();
+                            }
                         }
-
 
                         tx1.setText("save remained : " + Integer.toString(count));
                         count += 1;
+
+
                     }
 
 
-                    if (countflag == 0) {
-                        countflag++;
 
+                    this.sendEmptyMessageDelayed(MESSAGE_TIMER_REPEAT, 3000);
 
-                        this.sendEmptyMessageDelayed(MESSAGE_TIMER_REPEAT, 500);
-
-                    } else {
-                        this.sendEmptyMessageDelayed(MESSAGE_TIMER_REPEAT, 1000);
-                    }
 
                     ///////////////////////////////////////////////////////////////////////////////반복되는부분///////////////////////////////////////////////////////////////////////
                     try {
