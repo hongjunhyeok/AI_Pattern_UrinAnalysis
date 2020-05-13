@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".chartmenu">
+
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_weight="1"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <LinearLayout
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <Button
+                android:layout_weight="1"
+
+                android:id="@+id/btn_chart_to_gloucose"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+
+                android:background="#00FF0000"
+
+                android:text="@string/btn_chart_to_gloucose"
+                />
+
+            <Button
+
+                android:layout_weight="1"
+                android:id="@+id/btn_chart_to_PH"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+
+
+
+                android:background="#00FF0000"
+
+                android:text="@string/btn_chart_to_ph"
+
+                />
+
+
+
+        </LinearLayout>
+        <LinearLayout
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <Button
+                android:layout_weight="1"
+
+                android:id="@+id/btn_chart_to_protein"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+
+
+
+                android:background="#00FF0000"
+                android:text="@string/btn_chart_to_protein"
+
+                />
+
+            <Button
+                android:layout_weight="1"
+
+                android:id="@+id/btn_chart_to_rbc"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+
+                android:background="#00FF0000"
+
+                android:text="@string/btn_chart_to_rbc"
+                />
+
+
+        </LinearLayout>
+
+
+    </LinearLayout>
+
+</LinearLayout>

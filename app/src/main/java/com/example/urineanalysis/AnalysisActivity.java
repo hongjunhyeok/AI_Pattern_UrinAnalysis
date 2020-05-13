@@ -107,7 +107,7 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
 
     //{{{{do process
     Point p[] = new Point[5];
-        Point[] gloucose_p = new Point[6];
+    Point[] gloucose_p = new Point[6];
     Point[] protein_p = new Point[6];
     Point[] rbc_p = new Point[4];
     Point[] ph_p = new Point[5];
@@ -118,6 +118,8 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
     double[] rgbV_RBC = new double[3];
     double[] rgbV_PH = new double[3];
     double[] rgbV_REFERENCE = new double[3];
+
+
 
     Double tl_x[] = new Double[4];
     Double tl_y[] = new Double[4];
@@ -136,8 +138,8 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
 
 
     double rbc_incline =0.0;
-     double ph_incline =0.0;
-     double glou_incline=0.0;
+    double ph_incline =0.0;
+    double glou_incline=0.0;
     double prot_incline=0.0;
 
     double graph_rbc_a =0.0;
@@ -155,9 +157,14 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
 
 
 
-    double hue_rbc = 0;
+
     double[] hue_rbcs = new double[4];
     ArrayList<Double> hue_avg = new ArrayList<>();
+    ArrayList<Double> hue_glou = new ArrayList<>();
+    ArrayList<Double> hue_prot = new ArrayList<>();
+    ArrayList<Double> hue_rbc = new ArrayList<>();
+    ArrayList<Double> hue_ph = new ArrayList<>();
+
     ArrayList<String> strR = new ArrayList<>();
     ArrayList<String> strG = new ArrayList<>();
     ArrayList<String> strB = new ArrayList<>();
@@ -435,45 +442,45 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
         mRgba = inputFrame.rgba();
         mGray = inputFrame.gray();
 
-
+        frame_num++;
 //        preprocessor.changeImagePreviewOrientation(mRgba,mRgbaF,mRgbaT);
         final int viewMode = mViewMode;
         switch (viewMode) {
             case VIEW_MODE_START:
 
                 try {
-                MatOfRect bubble_rect = new MatOfRect();
+                    MatOfRect bubble_rect = new MatOfRect();
 
 
-                if (mJavaDetector != null) {
-                    mJavaDetector.detectMultiScale(mGray, bubble_rect, 2, 1, 0, new Size(), new Size());
+                    if (mJavaDetector != null) {
+                        mJavaDetector.detectMultiScale(mGray, bubble_rect, 2, 1, 0, new Size(), new Size());
 
-                }
-                bubble_array = bubble_rect.toArray();
-
-
-                for (int k = 0; k < bubble_array.length; k++) {
-
-
-                    if(bubble_array.length>4) break;
-
-                    for (int j=0;j<k;j++){
-                        if(Math.abs(bubble_array[j].x-bubble_array[k].x)<50){
-                            break;
-                        }
                     }
+                    bubble_array = bubble_rect.toArray();
 
-                    tl_x[k] =bubble_array[k].tl().x;
-                    tl_y[k] =bubble_array[k].tl().y;
-                    br_x[k] =bubble_array[k].br().x;
-                    br_y[k] =bubble_array[k].br().y;
+
+                    for (int k = 0; k < bubble_array.length; k++) {
+
+
+                        if(bubble_array.length>4) break;
+
+                        for (int j=0;j<k;j++){
+                            if(Math.abs(bubble_array[j].x-bubble_array[k].x)<50){
+                                break;
+                            }
+                        }
+
+                        tl_x[k] =bubble_array[k].tl().x;
+                        tl_y[k] =bubble_array[k].tl().y;
+                        br_x[k] =bubble_array[k].br().x;
+                        br_y[k] =bubble_array[k].br().y;
 
 //                    Imgproc.rectangle(mRgba, new Point(tl_x[k], tl_y[k]), new Point(br_x[k], br_y[k]), new Scalar(255, 255, 255), 2);
 //                    Imgproc.rectangle(mRgba,
 //                            new Point(bubble_array[k].tl().x, bubble_array[k].tl().y),
 //                            new Point(bubble_array[k].br().x, bubble_array[k].br().y),
 //                            new Scalar(255, 255, 255));
-                }
+                    }
 
 
 
@@ -632,7 +639,7 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
 
 
     boolean first = true;
-
+    int frame_num=0;
     protected void doProcess() {
         if (bubble_array.length == 4) {
 
@@ -753,28 +760,33 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
 
                 if (i == 0) {
                     rgbV_GLOUCOSE = average_RGB((int) x, (int) y);
+                    if(frame_num<20) hue_glou.add(calculateHue.getH(rgbV_GLOUCOSE));
                     Imgproc.putText(mRgba,String.format(Locale.KOREA,"%.1f" ,calculateHue.getH(rgbV_GLOUCOSE)),new Point(x+10,y),1,2,new Scalar(255,255,255));
 
                 }
                 if (i == 1) {
                     rgbV_PROTEIN = average_RGB((int)x, (int)y);
+                    if(frame_num<20) hue_prot.add(calculateHue.getH(rgbV_PROTEIN));
                     Imgproc.putText(mRgba,String.format(Locale.KOREA,"%.1f" ,calculateHue.getH(rgbV_PROTEIN)),new Point(x+10,y),1,2,new Scalar(255,255,255));
 
                 }
 
                 if (i == 2) {
                     rgbV_RBC = average_RGB((int)x, (int)y);
+                    if(frame_num<20) hue_rbc.add(calculateHue.getH(rgbV_RBC));
                     Imgproc.putText(mRgba,String.format(Locale.KOREA,"%.1f" ,calculateHue.getH(rgbV_RBC)),new Point(x+10,y),1,2,new Scalar(255,255,255));
 
                 }
                 if (i == 3) {
                     rgbV_PH = average_RGB((int) x, (int) y);
+                    if(frame_num<20) hue_ph.add(calculateHue.getH(rgbV_PH));
                     Imgproc.putText(mRgba,String.format(Locale.KOREA,"%.1f" ,calculateHue.getH(rgbV_PH)),new Point(x+10,y),1,2,new Scalar(255,255,255));
 
                 }
                 if (i == 4) {
                     rgbV_REFERENCE = average_RGB((int) x, (int) y);
                     Imgproc.putText(mRgba,String.format(Locale.KOREA,"%.1f" ,calculateHue.getH(rgbV_REFERENCE)),new Point(x+10,y),1,2,new Scalar(255,255,255));
+
                 }
             }
 
@@ -800,7 +812,7 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
                 xp[i] = middlex + (Math.cos(angle) * protein_p[i].x - Math.sin(angle) * protein_p[i].y) * ratio;
                 yp[i] = middley + (Math.sin(angle) * protein_p[i].x + Math.cos(angle) * protein_p[i].y) * ratio;
 
-;
+                ;
 
                 Imgproc.circle(mRgba, new Point(xg[i], yg[i]), (int) (10 * ratio), new Scalar(255, 255, 255));
                 Imgproc.circle(mRgba, new Point(xp[i], yp[i]), (int) (10 * ratio), new Scalar(255, 255, 255));
@@ -1034,12 +1046,24 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
 
 
                         if(count%5==0) {
-                            hue_G=calculateHue.getH(rgbV_GLOUCOSE);
-                            hue_P=calculateHue.getH(rgbV_PROTEIN);
-                            hue_H=calculateHue.getH(rgbV_PH);
-                            hue_R=calculateHue.getH(rgbV_RBC);
 
-                            msg_hue += String.format(Locale.KOREA, " %4d %.2f %.2f %.2f %.2f\r\n", count, hue_G, hue_P, hue_R, hue_H);
+                            for(int i=0;i<hue_glou.size();i++){
+                                hue_G+=hue_glou.get(i);
+                                hue_P+=hue_prot.get(i);
+                                hue_R+=hue_rbc.get(i);
+                                hue_H+=hue_ph.get(i);
+                            }
+                            hue_G=hue_G/hue_glou.size();
+                            hue_P=hue_P/hue_prot.size();
+                            hue_R=hue_R/hue_rbc.size();
+                            hue_H=hue_H/hue_ph.size();
+
+                            hue_glou.clear();
+                            hue_prot.clear();
+                            hue_rbc.clear();
+                            hue_ph.clear();
+                            frame_num=0; // 20번 평균내고 초기화.
+                            msg_hue += String.format(Locale.KOREA, " %4d %.4f %.4f %.4f %.4f\r\n", count, hue_G, hue_P, hue_R, hue_H);
                             Toast.makeText(getApplicationContext(),String.format(Locale.KOREA,"%d seconds ",(int)(count)),Toast.LENGTH_SHORT).show();
                         }
 
@@ -1132,7 +1156,7 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
         graph_rbc_b = trendline.get("b");
 
 
-           if(!incline.isNaN()){
+        if(!incline.isNaN()){
             rbc_incline += incline;
         }
 

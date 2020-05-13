@@ -30,12 +30,13 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity
-            android:name=".Tab.Tab2Activity"
-            android:configChanges="orientation|keyboardHidden|screenSize"
-            android:label="@string/title_activity_tab2"
-            android:theme="@style/FullscreenTheme"></activity>
-        <activity android:name=".Tab.Tab1Activity" />
+        <activity android:name=".menu_ph"></activity>
+        <activity android:name=".menu_rbc" />
+        <activity android:name=".menu_protein" />
+        <activity android:name=".menu_gloucose" />
+        <activity android:name=".chartmenu" />
+
+
         <activity
             android:name=".Chart2Activity"
             android:screenOrientation="sensorLandscape"

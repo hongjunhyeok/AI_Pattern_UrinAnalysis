@@ -6,7 +6,6 @@ import android.util.Log;
 import android.view.Window;
 import android.view.WindowManager;
 
-
 import com.anychart.AnyChart;
 import com.anychart.AnyChartView;
 import com.anychart.chart.common.dataentry.DataEntry;
@@ -14,9 +13,8 @@ import com.anychart.chart.common.dataentry.ValueDataEntry;
 import com.anychart.charts.Cartesian;
 import com.anychart.core.cartesian.series.Area;
 import com.anychart.core.ui.Crosshair;
-import com.anychart.data.Set;
-
 import com.anychart.data.Mapping;
+import com.anychart.data.Set;
 import com.anychart.enums.HoverMode;
 import com.anychart.enums.MarkerType;
 import com.anychart.enums.ScaleStackMode;
@@ -27,9 +25,10 @@ import com.example.urineanalysis.utils.FolderUtil;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Chart2Activity extends AppCompatActivity {
+public class menu_protein extends AppCompatActivity {
 
-    ArrayList<Double>list_gloucose=new ArrayList<>();
+
+    ArrayList<Double> list_gloucose=new ArrayList<>();
     ArrayList<Double>list_protein=new ArrayList<>();
     ArrayList<Double> list_rbc =new ArrayList<>();
     ArrayList<Double>list_ph=new ArrayList<>();
@@ -43,7 +42,7 @@ public class Chart2Activity extends AppCompatActivity {
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
                 WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
-        setContentView(R.layout.activity_chart2);
+        setContentView(R.layout.activity_menu_protein);
 
 
 
@@ -56,13 +55,12 @@ public class Chart2Activity extends AppCompatActivity {
         List<DataEntry> seriesData=new ArrayList<>();
         try {
 
-            list_gloucose =folderUtil.fileRead("chart.txt");
+            list_protein =folderUtil.fileRead("chart_protein.txt");
 
 
-            Log.i(TAG,Integer.toString(list_ph.size()));
 
-            for(int i=0;i<list_ph.size();i++){
-                seriesData.add(new CustomDataEntry(String.format("%d주",i+1),list_gloucose.get(i)));
+            for(int i=0;i<list_protein.size();i++){
+                seriesData.add(new menu_protein.CustomDataEntry(String.format("%d주",i+1),list_protein.get(i)));
             }
 //            seriesData.add(new CustomDataEntry(String.format("%d주",1),list_gloucose.get(0),list_protein.get(1), list_rbc.get(2),list_ph.get(3)));
 //            set.data(seriesData);
