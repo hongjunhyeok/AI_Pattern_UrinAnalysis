@@ -77,6 +77,7 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
     private static final int VIEW_MODE_START = 1;
     private static final int VIEW_MODE_INIT = 4;
 
+    private boolean is_detected= false;
     private static final int MESSAGE_TIMER_START = 100;
     private static final int MESSAGE_TIMER_REPEAT = 101;
     private static final int MESSAGE_TIMER_STOP = 102;
@@ -141,6 +142,7 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
     double ph_incline =0.0;
     double glou_incline=0.0;
     double prot_incline=0.0;
+    double prot_intercept=0.0;
 
     double graph_rbc_a =0.0;
     double graph_ph_a =0.0;
@@ -155,9 +157,10 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
     double hue_g=0,hue_p=0,hue_r=0,hue_h=0;
     double idx_g=0,idx_p=0,idx_r=0,idx_h=0;
 
-
-
-
+    ArrayList<Double> inclinearray=new ArrayList<Double>();
+    ArrayList<Double> interceptarray=new ArrayList<Double>();
+    ArrayList<Double> avg_a=new ArrayList<Double>();
+    ArrayList<Double> avg_b=new ArrayList<Double>();
     double[] hue_rbcs = new double[4];
     ArrayList<Double> hue_avg = new ArrayList<>();
     ArrayList<Double> hue_glou = new ArrayList<>();
@@ -175,11 +178,11 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
 
     Rect[] bubble_array;
     String msg_rgb;
-    String msg_hue="", msg_rbc;
+    String msg_hue="", msg_rbc,msg_glou,msg_prot,msg_ph;
     TimerHandler timerHandler = new TimerHandler();
     Intent intent_to_main;
     CalculateHue calculateHue=null;
-    String msgR = "R: ", msgG = "G: ", msgB = "B: ", msgResult = "", msgChart ="";
+    String msgG = "", msgP = "", msgH = "",msgR="", msgResult = "", msgChart ="";
 
 
     @Override
@@ -210,9 +213,9 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
                 .check();
 
         calculateHue = new CalculateHue();
-        Button btn_save = findViewById(R.id.btn_save);
-        Button btn_detect = findViewById(R.id.btn_detect);
-        Button bt_stop = findViewById(R.id.btn_TimerStop);
+        final Button btn_save = findViewById(R.id.btn_save);
+        final Button btn_detect = findViewById(R.id.btn_detect);
+        final Button bt_stop = findViewById(R.id.btn_TimerStop);
         Button bt_up = findViewById(R.id.btn_TimerUp);
         Button bt_dn = findViewById(R.id.btn_TimerDown);
 
@@ -232,13 +235,15 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
 
         mOpenCvCameraView = (OpenCameraView) findViewById(R.id.activity_surface_view);
 //        mOpenCvCameraView.setAF();
+
         mOpenCvCameraView.setVisibility(SurfaceView.VISIBLE);
         mOpenCvCameraView.setCvCameraViewListener(this);
         mOpenCvCameraView.setCameraIndex(1); // front-camera(1),  back-camera(0)
         mOpenCvCameraView.setMaxFrameSize(2000, 2000);
-
+//        mOpenCvCameraView.setFocusMode(this,0);
 
         drawPoint();
+
 
         btn_save.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -307,7 +312,6 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
                 intent_to_main = new Intent(AnalysisActivity.this, MainActivity.class);
                 String tmpH_uro = "";
 
-                intent_to_main.putExtra("hue_urobilinogen", msgResult);
 
                 double[] hue_urobilinogen_for_chart = new double[dbH.size()];
 
@@ -316,7 +320,7 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
                 }
 
                 intent_to_main.putExtra("chart_urobilinogen", hue_urobilinogen_for_chart);
-                Log.i(TAG, "msgResult : " + msgResult);
+
 
                 startActivity(intent_to_main);
             }
@@ -325,16 +329,7 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
         bt_stop.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                mViewMode = VIEW_MODE_INIT;
-                String tmpH_uro = "";
 
-
-                writeToFileAll();
-                Intent i = new Intent(getApplicationContext(),MainActivity.class);
-                Toast.makeText(getApplicationContext(),"The data saved sucessfully",Toast.LENGTH_SHORT).show();
-                timerHandler.sendEmptyMessage(MESSAGE_TIMER_STOP);
-                count=Timer;
-                startActivity(i);
             }
         });
         bt_up.setOnClickListener(new View.OnClickListener() {
@@ -360,20 +355,46 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
             @Override
             public void onClick(View v) {
 
-                try {
-                    mViewMode = VIEW_MODE_START;
 
-                    timerHandler.sendEmptyMessage(MESSAGE_TIMER_START);
+                if(!is_detected) {
+                    try {
+                        mViewMode = VIEW_MODE_START;
 
-                    Timer += 5;
+                        timerHandler.sendEmptyMessage(MESSAGE_TIMER_START);
+
+                        Timer += 5;
+                        btn_detect.setText("STOP");
+                        is_detected=!is_detected;
+                    } catch (Exception e) {
+                        Log.i(TAG, e.toString());
+                        Toast.makeText(getApplicationContext(), "Focusing 실패 다시눌러주세요", Toast.LENGTH_SHORT).show();
+                    }
+
+
+                }else{
+                    try {
+                        mViewMode = VIEW_MODE_INIT;
+                        is_detected=!is_detected;
+
+
+//
+                        btn_detect.setText("DETECT");
+
+                        Intent i = new Intent(getApplicationContext(),MainActivity.class);
+                        Toast.makeText(getApplicationContext(),"The data saved sucessfully",Toast.LENGTH_SHORT).show();
+                        timerHandler.sendEmptyMessage(MESSAGE_TIMER_STOP);
+                        count=Timer;
+                        startActivity(i);
+
+                        Toast.makeText(getApplicationContext(), "저장하였습니다.", Toast.LENGTH_SHORT).show();
+
+
+                    } catch (Exception e) {
+                        Log.i(TAG, e.toString());
+                        Toast.makeText(getApplicationContext(), "Focusing 실패 다시눌러주세요", Toast.LENGTH_SHORT).show();
+                    }
+
                 }
-                catch (Exception e){
-                    Log.i(TAG,e.toString());
-                    Toast.makeText(getApplicationContext(),"Focusing 실패 다시눌러누세요",Toast.LENGTH_SHORT).show();
-                }
-
-
-
             }
         });
 
@@ -385,6 +406,7 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
         super.onPause();
         if (mOpenCvCameraView != null)
             mOpenCvCameraView.disableView();
+//        timerHandler.sendEmptyMessage(MESSAGE_TIMER_STOP);
     }
 
     @Override
@@ -402,11 +424,9 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
 
     public void onDestroy() {
         super.onDestroy();
-
         if (mOpenCvCameraView != null)
             mOpenCvCameraView.disableView();
     }
-
     @Override
     public void onCameraViewStarted(int width, int height) {
         mRgba = new Mat(height, width, CvType.CV_8UC3);
@@ -418,26 +438,23 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
         cropped_h = mRgba.height();
 
         for (int i = 0; i < 4; i++) {
-
-
             tl_x[i]=0.0;
             tl_y[i]=0.0;
-
             br_x[i]=0.0;
             br_y[i]=0.0;
         }
     }
-
-
     // destroy image data when you stop camera preview
     @Override
     public void onCameraViewStopped() {
         mRgba.release();
     }
 
+
+
+    /////////////////////카메라가 동작하면서 매 프레임마다 이미지분석 //////////////////////
     @Override
     public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputFrame) {
-
         // TODO Auto-genetated method stub
         mRgba = inputFrame.rgba();
         mGray = inputFrame.gray();
@@ -475,22 +492,14 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
                         br_x[k] =bubble_array[k].br().x;
                         br_y[k] =bubble_array[k].br().y;
 
-//                    Imgproc.rectangle(mRgba, new Point(tl_x[k], tl_y[k]), new Point(br_x[k], br_y[k]), new Scalar(255, 255, 255), 2);
-//                    Imgproc.rectangle(mRgba,
-//                            new Point(bubble_array[k].tl().x, bubble_array[k].tl().y),
-//                            new Point(bubble_array[k].br().x, bubble_array[k].br().y),
-//                            new Scalar(255, 255, 255));
+
                     }
-
-
-
                     doProcess();
                 } catch (Exception e) {
                     Intent i =new Intent(getApplicationContext(),MainActivity.class);
                     startActivityForResult(i, Activity.RESULT_OK);
                     Log.i(TAG, e.toString());
                 }
-//                doProcess();
                 break;
             case VIEW_MODE_INIT:
 
@@ -501,7 +510,6 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
                 double rst=calculateHue.getH(tmpavg);
                 Imgproc.putText(mRgba,String.format("RGB :%.1f %.1f %.1f H: %.3f",rgb[0],rgb[1],rgb[2],rst),new Point(850,300),1,2,new Scalar(255,255,255));
                 break;
-
         }
 
 
@@ -513,7 +521,10 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
 
         return mRgba;
     }
+/////////////////////카메라가 동작하면서 매 프레임마다 이미지분석 //////////////////////
 
+
+    /////////////////////////////////////opencv 앱에 설정//////////////////////////////////
     private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
         @Override
         public void onManagerConnected(int status) {
@@ -523,42 +534,22 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
 
                     try {
                         InputStream is = getResources().openRawResource(R.raw.cascade_circle);
-
-
-//                        scaleFactor=1.11;minNeighbors=5;
-//                        mN1=10; mN2=5; mN3=10;
-
                         File mCascadeFile, mModelFile2, mModelFile3, mModelFile4;
-
                         File cascadeDir = getDir("cascade", Context.MODE_PRIVATE);
-
-
                         mCascadeFile = new File(cascadeDir, "cascade_in.xml");
-
-
                         FileOutputStream os = new FileOutputStream(mCascadeFile);
-
-
-//                        FileOutputStream os_mains = new FileOutputStream(mModelFile2);
-//                        FileOutputStream os_3=new FileOutputStream(mModelFile3);
                         byte[] buffer = new byte[4096];
-
                         int bytesRead;
                         while ((bytesRead = is.read(buffer)) != -1) {
                             os.write(buffer, 0, bytesRead);
                         }
-
-
                         is.close();
                         os.close();
-
                         mJavaDetector = new CascadeClassifier(mCascadeFile.getAbsolutePath());
-
                     } catch (IOException e) {
                         e.printStackTrace();
                         Log.e(TAG, "Failed to load cascade. Exception thrown: " + e);
                     }
-
                     mRgba = new Mat();
                     mOpenCvCameraView.enableView();
                 }
@@ -570,6 +561,8 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
             }
         }
     };
+    /////////////////////////////////////opencv 앱에 설정//////////////////////////////////
+
     /////////////////////////////////여기서부턴 퍼미션 관련 메소드///////////////////////////////////////
     static final int PERMISSIONS_REQUEST_CODE = 1000;
     String[] PERMISSIONS = {"android.permission.CAMERA", "android.permission.WRITE_EXTERNAL_STORAGE"};
@@ -631,15 +624,19 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
             }
         });
         builder.create().show();
-    }
+}
+    ///////////////////////////////// 퍼미션 관련 메소드///////////////////////////////////////
+
+
+
 
     // 0 1 2 3 인덱스 = 11, 1, 5, 7시 위치한 좌표
     Double sorted_x[] = new Double[4];
     Double sorted_y[] = new Double[4];
-
-
     boolean first = true;
     int frame_num=0;
+
+
     protected void doProcess() {
         if (bubble_array.length == 4) {
 
@@ -654,10 +651,6 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
                 array_y[k] = (bubble_array[k].tl().y + bubble_array[k].br().y) / 2;
             }
 
-//            Log.i(TAG, "\narray_[0] = {" + String.format(Locale.KOREA, "%.2f , %.2f", array_x[0], array_y[0]) + "}\n" +
-//                    "array1 = {" + String.format(Locale.KOREA, "%.2f , %.2f", array_x[1], array_y[1]) + "}\n" +
-//                    "array2 = {" + String.format(Locale.KOREA, "%.2f , %.2f", array_x[2], array_y[2]) + "}\n" +
-//                    "array3 = {" + String.format(Locale.KOREA, "%.2f , %.2f", array_x[3], array_y[3]) + "}");
 
             //11,1,5,7시 방향을 0 1 2 3 인덱스로 맞추기 위해 정렬
             double tmp_max = 0, tmp_min = 1000000;
@@ -760,26 +753,26 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
 
                 if (i == 0) {
                     rgbV_GLOUCOSE = average_RGB((int) x, (int) y);
-                    if(frame_num<20) hue_glou.add(calculateHue.getH(rgbV_GLOUCOSE));
+                    if(frame_num<50) hue_glou.add(calculateHue.getH(rgbV_GLOUCOSE));
                     Imgproc.putText(mRgba,String.format(Locale.KOREA,"%.1f" ,calculateHue.getH(rgbV_GLOUCOSE)),new Point(x+10,y),1,2,new Scalar(255,255,255));
 
                 }
                 if (i == 1) {
                     rgbV_PROTEIN = average_RGB((int)x, (int)y);
-                    if(frame_num<20) hue_prot.add(calculateHue.getH(rgbV_PROTEIN));
-                    Imgproc.putText(mRgba,String.format(Locale.KOREA,"%.1f" ,calculateHue.getH(rgbV_PROTEIN)),new Point(x+10,y),1,2,new Scalar(255,255,255));
+                    if(frame_num<50) hue_prot.add(calculateHue.getH(rgbV_PROTEIN));
+                    Imgproc.putText(mRgba,String.format(Locale.KOREA,"%.2f" ,calculateHue.getH(rgbV_PROTEIN)),new Point(x+10,y),1,2,new Scalar(255,255,255));
 
                 }
 
                 if (i == 2) {
                     rgbV_RBC = average_RGB((int)x, (int)y);
-                    if(frame_num<20) hue_rbc.add(calculateHue.getH(rgbV_RBC));
+                    if(frame_num<50) hue_rbc.add(calculateHue.getH(rgbV_RBC));
                     Imgproc.putText(mRgba,String.format(Locale.KOREA,"%.1f" ,calculateHue.getH(rgbV_RBC)),new Point(x+10,y),1,2,new Scalar(255,255,255));
 
                 }
                 if (i == 3) {
                     rgbV_PH = average_RGB((int) x, (int) y);
-                    if(frame_num<20) hue_ph.add(calculateHue.getH(rgbV_PH));
+                    if(frame_num<50) hue_ph.add(calculateHue.getH(rgbV_PH));
                     Imgproc.putText(mRgba,String.format(Locale.KOREA,"%.1f" ,calculateHue.getH(rgbV_PH)),new Point(x+10,y),1,2,new Scalar(255,255,255));
 
                 }
@@ -790,37 +783,40 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
                 }
             }
 
-            for (int i=0;i<5;i++){
-                xh[i] = middlex + (Math.cos(angle) * ph_p[i].x - Math.sin(angle) * ph_p[i].y) * ratio;
-                yh[i] = middley + (Math.sin(angle) * ph_p[i].x + Math.cos(angle) * ph_p[i].y) * ratio;
+            try {
+                for (int i = 0; i < 5; i++) {
+                    xh[i] = middlex + (Math.cos(angle) * ph_p[i].x - Math.sin(angle) * ph_p[i].y) * ratio;
+                    yh[i] = middley + (Math.sin(angle) * ph_p[i].x + Math.cos(angle) * ph_p[i].y) * ratio;
 
-                Imgproc.circle(mRgba, new Point(xh[i], yh[i]), (int) (10 * ratio), new Scalar(255, 255, 255));
-                Imgproc.putText(mRgba,String.format("%.1f",calculateHue.getH(average_RGB((int) xh[i],(int) yh[i]))),new Point(xh[i], yh[i]-25),1,2,new Scalar(255,255,255));
+                    Imgproc.circle(mRgba, new Point(xh[i], yh[i]), (int) (10 * ratio), new Scalar(255, 255, 255));
+                    Imgproc.putText(mRgba, String.format("%.1f", calculateHue.getH(average_RGB((int) xh[i], (int) yh[i]))), new Point(xh[i], yh[i] - 25), 1, 2, new Scalar(255, 255, 255));
+                }
+                for (int i = 0; i < 4; i++) {
+                    xr[i] = middlex + (Math.cos(angle) * rbc_p[i].x - Math.sin(angle) * rbc_p[i].y) * ratio;
+                    yr[i] = middley + (Math.sin(angle) * rbc_p[i].x + Math.cos(angle) * rbc_p[i].y) * ratio;
+                    Imgproc.circle(mRgba, new Point(xr[i], yr[i]), (int) (10 * ratio), new Scalar(255, 255, 255));
+                    Imgproc.putText(mRgba, String.format("%.1f", calculateHue.getH(average_RGB((int) xr[i], (int) yr[i]))), new Point(xr[i] + 25, yr[i]), 1, 2, new Scalar(255, 255, 255));
+                }
+
+                for (int i = 0; i < 6; i++) {
+                    //angle만큼 회전이동 후 middlex,middley만큼 평행이동.
+                    //x'=xcos(a)-ysin(a) , y' = xsin(a) + ycos(a)
+                    xg[i] = middlex + (Math.cos(angle) * gloucose_p[i].x - Math.sin(angle) * gloucose_p[i].y) * ratio;
+                    yg[i] = middley + (Math.sin(angle) * gloucose_p[i].x + Math.cos(angle) * gloucose_p[i].y) * ratio;
+                    xp[i] = middlex + (Math.cos(angle) * protein_p[i].x - Math.sin(angle) * protein_p[i].y) * ratio;
+                    yp[i] = middley + (Math.sin(angle) * protein_p[i].x + Math.cos(angle) * protein_p[i].y) * ratio;
+
+                    ;
+
+                    Imgproc.circle(mRgba, new Point(xg[i], yg[i]), (int) (10 * ratio), new Scalar(255, 255, 255));
+                    Imgproc.circle(mRgba, new Point(xp[i], yp[i]), (int) (10 * ratio), new Scalar(255, 255, 255));
+                    Imgproc.putText(mRgba, String.format("%.1f", calculateHue.getH(average_RGB((int) xg[i], (int) yg[i]))), new Point(xg[i] + 25, yg[i]), 1, 2, new Scalar(255, 255, 255));
+                    Imgproc.putText(mRgba, String.format("%.2f", calculateHue.getH(average_RGB((int) xp[i], (int) yp[i]))), new Point(xp[i], yp[i] - 25), 1, 2, new Scalar(255, 255, 255));
+
+                }
+            }catch(Exception e){
+                e.printStackTrace();
             }
-            for (int i=0;i<4;i++){
-                xr[i] = middlex + (Math.cos(angle) * rbc_p[i].x - Math.sin(angle) * rbc_p[i].y) * ratio;
-                yr[i] = middley + (Math.sin(angle) * rbc_p[i].x + Math.cos(angle) * rbc_p[i].y) * ratio;
-                Imgproc.circle(mRgba, new Point(xr[i], yr[i]), (int) (10 * ratio), new Scalar(255, 255, 255));
-                Imgproc.putText(mRgba,String.format("%.1f",calculateHue.getH(average_RGB((int) xr[i],(int) yr[i]))),new Point(xr[i]+25, yr[i]),1,2,new Scalar(255,255,255));
-            }
-
-            for (int i = 0; i < 6; i++) {
-                //angle만큼 회전이동 후 middlex,middley만큼 평행이동.
-                //x'=xcos(a)-ysin(a) , y' = xsin(a) + ycos(a)
-                xg[i] = middlex + (Math.cos(angle) * gloucose_p[i].x - Math.sin(angle) * gloucose_p[i].y) * ratio;
-                yg[i] = middley + (Math.sin(angle) * gloucose_p[i].x + Math.cos(angle) * gloucose_p[i].y) * ratio;
-                xp[i] = middlex + (Math.cos(angle) * protein_p[i].x - Math.sin(angle) * protein_p[i].y) * ratio;
-                yp[i] = middley + (Math.sin(angle) * protein_p[i].x + Math.cos(angle) * protein_p[i].y) * ratio;
-
-                ;
-
-                Imgproc.circle(mRgba, new Point(xg[i], yg[i]), (int) (10 * ratio), new Scalar(255, 255, 255));
-                Imgproc.circle(mRgba, new Point(xp[i], yp[i]), (int) (10 * ratio), new Scalar(255, 255, 255));
-                Imgproc.putText(mRgba,String.format("%.1f",calculateHue.getH(average_RGB((int)xg[i],(int)yg[i]))),new Point(xg[i]+25,yg[i]),1,2,new Scalar(255,255,255));
-                Imgproc.putText(mRgba,String.format("%.1f",calculateHue.getH(average_RGB((int)xp[i],(int)yp[i]))),new Point(xp[i],yp[i]-25),1,2,new Scalar(255,255,255));
-
-            }
-
 
 
             Imgproc.putText(mRgba, "Gc", new Point(sorted_x[0], sorted_y[0]), 1, 3, new Scalar(255, 0, 0), 2);
@@ -851,26 +847,16 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
     }
 
 
-    private void writeToFileAll() {
+    private void write_data() {
 
         long now = System.currentTimeMillis(); // 현재시간 받아오기
         Date date = new Date(now); // Date 객체 생성
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy.MM.dd-HH:mm:ss", Locale.KOREA);
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss", Locale.KOREA);
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd",Locale.KOREA);
         String nowTime = sdf.format(date);
+        String nowDay=dateFormat.format(date);
 
 
-//       for(int i=0;i<strR.size();i++){
-//           msgR+=strR.get(i);
-//       }
-//        for(int i=0;i<strG.size();i++){
-//            msgG+=strG.get(i);
-//        }
-//        for(int i=0;i<strB.size();i++){
-//            msgB+=strB.get(i);
-//        }
-//        for (int i = 0; i < strH.size(); i++) {
-//            msgResult += strH.get(i)+"\r\n";
-//        }
 
 
 
@@ -880,6 +866,10 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
         try {
             File file = new File(Environment.getExternalStorageDirectory() + "/OneFileUrineCup");
             File chartfile =new File(Environment.getExternalStorageDirectory() + "/OneFileUrineCup"+"/chart.txt");
+            File gloufile =new File(Environment.getExternalStorageDirectory() + "/OneFileUrineCup"+"/chart_gloucose.txt");
+            File protfile =new File(Environment.getExternalStorageDirectory() + "/OneFileUrineCup"+"/chart_prot.txt");
+            File rbcfile =new File(Environment.getExternalStorageDirectory() + "/OneFileUrineCup"+"/chart_rbc.txt");
+            File phfile =new File(Environment.getExternalStorageDirectory() + "/OneFileUrineCup"+"/chart_ph.txt");
             File resultfile =new File(Environment.getExternalStorageDirectory() + "/OneFileUrineCup"+"/result.txt");
             File huefile =new File(Environment.getExternalStorageDirectory() + "/OneFileUrineCup/"+"/hue_"+nowTime+".txt");
             if (!file.exists()) {
@@ -895,48 +885,131 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
             if(!huefile.exists()){
                 huefile.createNewFile();
             }
-//            FileWriter writer = new FileWriter(file + "/result.txt");
-//            writer.append(msgResult);
-//            writer.append("\r\n");
-//            writer.flush();
-//            writer.close();
-//            strR.clear();
-//            strG.clear();
-//            strB.clear();
-//            strH.clear();
+            if(!gloufile.exists()){
+                gloufile.createNewFile();
+            }
+            if(!protfile.exists()){
+                protfile.createNewFile();
+            }
+            if(!rbcfile.exists()){
+                rbcfile.createNewFile();
+            }
+            if(!phfile.exists()){
+                phfile.createNewFile();
+            }
+            FileWriter writer = new FileWriter(file + "/result.txt");
+            writer.append(msgResult);
+            writer.append("\r\n");
+            writer.flush();
+            writer.close();
+            strR.clear();
+            strG.clear();
+            strB.clear();
+            strH.clear();
 
 
-            //////////////차트용 데이터 생성//////////////////
-//            FileReader reader1= new FileReader(file+"/chart.txt");
-//            BufferedReader br1=new BufferedReader(reader1);
-//            String line;
-//            String contents="";
-//            while ((line = br1.readLine()) != null) {
-//                contents+=(line);
-//                contents+="\r\n";
-//            }
-//            br1.close();
-//            reader1.close();
-//
-//            FileWriter writer1=  new FileWriter(file +"/chart.txt");
-//            writer1.append(contents);
-//            writer1.append(contents);
-//            writer1.append(msgChart);
-//            writer1.flush();
-//            writer1.close();
-            //////////////차트용 데이터 생성//////////////////
+            ////////////포도당차트용 데이터 생성//////////////////
+            FileReader reader1= new FileReader(gloufile);
+            BufferedReader br1=new BufferedReader(reader1);
+            String line;
+            String contents="";
+            while ((line = br1.readLine()) != null) {
+                contents+=(line);
+                contents+="\r\n";
+            }
+            br1.close();
+            reader1.close();
+
+            FileWriter writer1=  new FileWriter(gloufile);
+            writer1.append(msg_glou);
+            writer1.append("\r\n");
+            writer1.append(contents);
+            writer1.flush();
+            writer1.close();
+            ////////////포도당차트용 데이터 생성//////////////////
+
+            ////////////단백질 데이터 생성//////////////////
+            FileReader pr= new FileReader(protfile);
+            BufferedReader pbr1=new BufferedReader(pr);
+            String pline;
+            String pcontents="";
+            while ((pline = pbr1.readLine()) != null) {
+                pcontents+=(pline);
+                pcontents+="\r\n";
+            }
+            pbr1.close();
+            pr.close();
+
+            FileWriter pwriter1=  new FileWriter(protfile);
+            pwriter1.append(msg_prot);
+            pwriter1.append("\r\n");
+            pwriter1.append(pcontents);
+            pwriter1.flush();
+            pwriter1.close();
+            ////////////단백질차트용 데이터 생성//////////////////
+
+            ////////////rbc차트용 데이터 생성//////////////////
+            FileReader rreader1= new FileReader(rbcfile);
+            BufferedReader rbr1=new BufferedReader(rreader1);
+            String rline;
+            String rcontents="";
+            while ((rline = rbr1.readLine()) != null) {
+                rcontents+=(rline);
+                rcontents+="\r\n";
+            }
+            rbr1.close();
+            rreader1.close();
+
+            FileWriter rwriter1=  new FileWriter(rbcfile);
+            rwriter1.append(msg_rbc);
+            rwriter1.append("\r\n");
+            rwriter1.append(rcontents);
+            rwriter1.flush();
+            rwriter1.close();
+            ////////////rbc차트용 데이터 생성//////////////////
+
+            ////////////ph차트용 데이터 생성//////////////////
+            FileReader hreader1= new FileReader(phfile);
+            BufferedReader hbr1=new BufferedReader(hreader1);
+            String hline;
+            String hcontents="";
+            while ((hline = hbr1.readLine()) != null) {
+                hcontents+=(hline);
+                hcontents+="\r\n";
+            }
+            hbr1.close();
+            hreader1.close();
+
+            FileWriter hwriter1=  new FileWriter(phfile);
+            hwriter1.append(msg_ph);
+            hwriter1.append("\r\n");
+            hwriter1.append(hcontents);
+            hwriter1.flush();
+            hwriter1.close();
+            ////////////ph차트용 데이터 생성//////////////////
+
+
+            ////////////day 데이터 생성//////////////////
+            FileReader dr= new FileReader(chartfile);
+            BufferedReader dbr1=new BufferedReader(dr);
+            String dline;
+            String dcontents="";
+            while ((dline = dbr1.readLine()) != null) {
+               dcontents+=(dline);
+                dcontents+="\r\n";
+            }
+            dbr1.close();
+            dr.close();
+
+            FileWriter dwriter1=  new FileWriter(chartfile);
+            dwriter1.append(sdf.format(date)+"\r\n");
+            dwriter1.append(dcontents);
+            dwriter1.flush();
+            dwriter1.close();
+            ////////////day 데이터 생성//////////////////
 
             //////////////실험용 데이터 생성//////////////////
-//            FileReader reader2= new FileReader(file+"/hue.txt");
-//            BufferedReader br2=new BufferedReader(reader2);
-//            String line2;
-//            String contents2="";
-//            while ((line = br2.readLine()) != null) {
-//                contents2+=(line);
-//                contents2+="\r\n";
-//            }
-//            br2.close();
-//            reader2.close();
+
 
             FileWriter writer2 = new FileWriter(huefile);
             writer2.append(sdf.format(date)+"\r\n");
@@ -954,10 +1027,9 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
         }
     }
 
+
+    //작업수행할 포인트 그리기
     void drawPoint() {
-
-
-
 
         int step = 45;
         int loc=35;
@@ -1030,6 +1102,8 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
                     this.sendEmptyMessage(MESSAGE_TIMER_REPEAT);
                     break;
 
+
+                    //반복수행
                 case MESSAGE_TIMER_REPEAT:
 
                     if (Timer - (count) < 0) {
@@ -1045,14 +1119,17 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
                         double hue_G = 0,hue_P=0,hue_R=0,hue_H=0;
 
 
+                        ///5초마다 측정치 계산
                         if(count%5==0) {
-
                             for(int i=0;i<hue_glou.size();i++){
+
                                 hue_G+=hue_glou.get(i);
                                 hue_P+=hue_prot.get(i);
                                 hue_R+=hue_rbc.get(i);
                                 hue_H+=hue_ph.get(i);
+                            
                             }
+
                             hue_G=hue_G/hue_glou.size();
                             hue_P=hue_P/hue_prot.size();
                             hue_R=hue_R/hue_rbc.size();
@@ -1065,20 +1142,19 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
                             frame_num=0; // 20번 평균내고 초기화.
                             msg_hue += String.format(Locale.KOREA, " %4d %.4f %.4f %.4f %.4f\r\n", count, hue_G, hue_P, hue_R, hue_H);
                             Toast.makeText(getApplicationContext(),String.format(Locale.KOREA,"%d seconds ",(int)(count)),Toast.LENGTH_SHORT).show();
+
+                            Button btn_save = findViewById(R.id.btn_TimerStop);
+
+//                            if(count>4)
+//                                btn_save.performClick();
                         }
-
-
                         tx1.setText("save remained : " + Integer.toString(count));
                         count += 1;
                     }
 
-
                     if (countflag == 0) {
                         countflag++;
-
-
                         this.sendEmptyMessageDelayed(MESSAGE_TIMER_REPEAT, 500);
-
                     } else {
                         this.sendEmptyMessageDelayed(MESSAGE_TIMER_REPEAT, 1000);
                     }
@@ -1115,19 +1191,34 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
                     idx_r=getUrineIndex("rbc",hue_r);
                     idx_h=getUrineIndex("ph",hue_h);
 
+                    if(idx_g<1.8) idx_g=1;
+                    if(idx_p<1.8) idx_p=1;
+                    if(idx_r<1.8) idx_r=1;
+                    if(idx_h<1.8) idx_h=1;
 
-                    if(idx_g<1) idx_g=1;
-                    if(idx_p<1) idx_p=1;
-                    if(idx_r<1) idx_r=1;
-                    if(idx_h<1) idx_h=1;
+                    if(idx_g>6) idx_g=6;
+                    if(idx_p>6) idx_p=6;
+                    if(idx_r>4) idx_r=4;
+                    if(idx_h>5) idx_h=5;
+
+                    msg_glou=String.format(Locale.KOREA,"%.2f",(idx_g-0.99)*100);
+                    if(idx_p<=3)
+                        msg_prot=String.format(Locale.KOREA,"%.2f",(idx_p-0.99)*50);
+                    else{
+                        msg_prot=String.format(Locale.KOREA,"%.2f",(idx_p-1.99)*100);
+                    }
+                    msg_ph=String.format(Locale.KOREA,"%.2f",(idx_h+4));
+                    //RBC 실험못해봐서 0으로 넣음. 추가할것###########################
+                    msg_rbc=String.format(Locale.KOREA,"%.2f",idx_r*0);
+
                     Log.i("result:",String.format("%.1f,%.1f,%.1f,%.1f",hue_g,hue_p,hue_r,hue_h));
                     Log.i("result:",String.format("%.1f,%.1f,%.1f,%.1f",idx_g,idx_p,idx_r,idx_h));
+                    Log.i("result:",msg_glou+" "+msg_prot+" "+msg_rbc+" "+msg_ph);
                     countflag = 0;
-                    msg_rgb = "";
-                    msg_rbc = "";
+
 //
                     hue_avg.clear();
-
+                    write_data();
 
                     this.removeMessages(MESSAGE_TIMER_REPEAT);
                     break;
@@ -1140,27 +1231,23 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
         double hue_bilirubin = calculateHue.getH(rgbV_RBC);
         double[] y_bilirubin = new double[4];
         double[] x_bilirubin = new double[4];
+
         for (int i = 0; i < 4; i++) {
             double[] avg = average_RGB((int) xr[i], (int) yr[i]);
             y_bilirubin[i] = calculateHue.getH(avg);
             x_bilirubin[i] = i + 1;
-
         }
 
 //                    Log.i(TAG,String.format("%.2f %.2f %.2f %.2f //////%.2f %.2f %.2f %.2f",yr[0],yr[1],yr[2],yr[3],y_bilirubin[0],y_bilirubin[1],y_bilirubin[2],y_bilirubin[3]));
-
 
         HashMap<String, Double> trendline = null;
         trendline = calculateHue.getTrendLine(x_bilirubin, y_bilirubin);
         Double incline = trendline.get("a");
         graph_rbc_b = trendline.get("b");
 
-
         if(!incline.isNaN()){
             rbc_incline += incline;
         }
-
-
 
         msg_rgb = "";
 
@@ -1187,13 +1274,13 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
             msg_Equation = "y=" + (Double.parseDouble(String.format(Locale.KOREA, "%.2f", graph_rbc_a)))
                     + "x+" + (Double.parseDouble(String.format(Locale.KOREA, "%.2f", graph_rbc_b)));
         }
-        tx3.setText(msg_Equation);
+//        tx3.setText(msg_Equation);
     }
     void ph_cal(){
         double hue_ph = calculateHue.getH(rgbV_PH);
-        double[] y_ph = new double[4];
-        double[] x_ph = new double[4];
-        for (int i = 0; i < 4; i++) {
+        double[] y_ph = new double[5];
+        double[] x_ph = new double[5];
+        for (int i = 0; i < 5; i++) {
             double[] avg = average_RGB((int) xh[i], (int) yh[i]);
             y_ph[i] = calculateHue.getH(avg);
             x_ph[i] = i + 1;
@@ -1241,9 +1328,9 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
 
     void gloucose_cal(){
         double hue_gloucose = calculateHue.getH(rgbV_GLOUCOSE);
-        double[] y_gloucose = new double[4];
-        double[] x_gloucose = new double[4];
-        for (int i = 0; i < 4; i++) {
+        double[] y_gloucose = new double[6];
+        double[] x_gloucose = new double[6];
+        for (int i = 0; i < 6; i++) {
             double[] avg = average_RGB((int) xg[i], (int) yg[i]);
             y_gloucose[i] = calculateHue.getH(avg);
             x_gloucose[i] = i + 1;
@@ -1292,9 +1379,9 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
     }
     void protein_cal(){
         double hue_protein = calculateHue.getH(rgbV_PROTEIN);
-        double[] y_protein = new double[4];
-        double[] x_protein = new double[4];
-        for (int i = 0; i < 4; i++) {
+        double[] y_protein = new double[6];
+        double[] x_protein = new double[6];
+        for (int i = 0; i < 6; i++) {
             double[] avg = average_RGB((int) xp[i], (int) yp[i]);
             y_protein[i] = calculateHue.getH(avg);
             x_protein[i] = i + 1;
@@ -1307,25 +1394,71 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
         HashMap<String, Double> trendline = null;
         trendline = calculateHue.getTrendLine(x_protein, y_protein);
         Double incline = trendline.get("a");
-        graph_prot_b = trendline.get("b");
+       Double intercept = trendline.get("b");
+
+
         if(!incline.isNaN())
         {
             prot_incline += incline;
+            inclinearray.add(incline);
         }
 
-        msg_rgb = "";
+        if(!intercept.isNaN()){
+            prot_intercept+=intercept;
+            interceptarray.add(intercept);
+        }
+
 
         String msg_Equation;
-        msg_rgb = String.format(Locale.KOREA, "R : %.1f\nG: %.1f\nB: %.1f\n", rgbV_PROTEIN[0], rgbV_PROTEIN[1], rgbV_PROTEIN[2]);
 
 
+        //평균구함
+        if(count>1) {
+            graph_prot_a = prot_incline / (count - 1);
+            graph_prot_b = prot_intercept / (count - 1);
+        }
 
-        graph_prot_a = prot_incline /(double) count;
+
+        double mse=0,mse_b=0;
 
 
-//        Log.i(TAG, String.format("%.2f %.2f %.2f", graph_ph_a, ph_incline, incline));
-//        Log.i(TAG, Double.toString(graph_ph_a));
-//                        Log.i(TAG, Double.toString(rbc_incline));
+        //Squareroot구함.
+        double[] se=new double[inclinearray.size()];
+        double[] se_b=new double[inclinearray.size()];
+
+        for (int i=0;i<inclinearray.size();i++){
+            se[i]=Math.sqrt(Math.pow((graph_glou_a-incline),2));
+            se_b[i]=Math.sqrt(Math.pow((graph_glou_b-intercept),2));
+            mse+=se[i];
+            mse_b+=se_b[i];
+        }
+        mse/=inclinearray.size();
+        mse_b/=inclinearray.size();
+        int tmp_count=0;
+
+        for (int i=0;i<inclinearray.size();i++){
+            if(se[i]<mse) {
+                avg_a.add(inclinearray.get(i));
+                avg_b.add(interceptarray.get(i));
+
+            }
+        }
+
+
+        double rst_a=0,rst_b=0;
+        for(int i=0;i<avg_a.size();i++){
+
+            if(!avg_a.get(i).isNaN()) {
+                rst_a += avg_a.get(i);
+                rst_b += avg_b.get(i);
+            }
+        }
+        rst_a/=avg_a.size();
+        rst_b/=avg_b.size();
+
+        Log.i("INCLINEARRAY",String.format("Timer %d, 실시간:%.3f %.3f, 평균: %.3f,%.3f , 처리:%.3f %.3f",count,incline,intercept,graph_prot_a,graph_prot_b,rst_a,rst_b));
+        //계속 데이터를 모은 후, 마지막에 mse 값보다 큰 항목을 제거, mse값보다 작은 항목만을 평균취해서 기울기,절편을 구함
+
         if (graph_prot_b < 0) {
             msg_Equation = "y=" + (Double.parseDouble(String.format(Locale.KOREA, "%.2f", graph_prot_a)))
                     + "x" + (Double.parseDouble(String.format(Locale.KOREA, "%.2f", graph_prot_b)));
@@ -1333,7 +1466,26 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
             msg_Equation = "y=" + (Double.parseDouble(String.format(Locale.KOREA, "%.2f", graph_prot_a)))
                     + "x+" + (Double.parseDouble(String.format(Locale.KOREA, "%.2f", graph_prot_b)));
         }
+        tx1.setText(msg_Equation);
+        if (graph_prot_b < 0) {
+            msg_Equation = "y=" + (Double.parseDouble(String.format(Locale.KOREA, "%.2f", incline)))
+                    + "x" + (Double.parseDouble(String.format(Locale.KOREA, "%.2f", intercept)));
+        } else {
+            msg_Equation = "y=" + (Double.parseDouble(String.format(Locale.KOREA, "%.2f", incline)))
+                    + "x+" + (Double.parseDouble(String.format(Locale.KOREA, "%.2f", intercept)));
+        }
         tx2.setText(msg_Equation);
+
+        if (graph_prot_b < 0) {
+            msg_Equation = "y=" + (Double.parseDouble(String.format(Locale.KOREA, "%.2f", rst_a)))
+                    + "x" + (Double.parseDouble(String.format(Locale.KOREA, "%.2f", rst_b)));
+        } else {
+            msg_Equation = "y=" + (Double.parseDouble(String.format(Locale.KOREA, "%.2f", rst_a)))
+                    + "x+" + (Double.parseDouble(String.format(Locale.KOREA, "%.2f", rst_b)));
+        }
+        tx3.setText(msg_Equation);
+
+
     }
 
     double getUrineIndex(String a,double hue){
@@ -1355,23 +1507,16 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
                 break;
             default :
                 index=-1;
-//                return -1;
+//
         }
         return index;
     }
 
-
-
-
     double[] average_RGB(int x, int y) {
-
         double tmpR = 0;
         double tmpG = 0;
         double tmpB = 0;
-
         double[] avgRGB = new double[3];
-
-
         for (int i = x - 1; i < x + 2; i++) {
             for (int j = y - 1; j < y + 2; j++) {
                 double[] rgbV = mRgba.get(j, i);
@@ -1381,17 +1526,13 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
                 tmpB += rgbV[2];
             }
         }
-
         tmpR = tmpR / 9;
         tmpG = tmpG / 9;
         tmpB = tmpB / 9;
-
         avgRGB[0] = tmpR;
         avgRGB[1] = tmpG;
         avgRGB[2] = tmpB;
-
         return avgRGB;
-
     }
 
 }
