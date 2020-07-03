@@ -48,6 +48,7 @@
             android:layout_height="wrap_content"
             android:background="#FFBB97"
             android:text="측    정"
+            android:visibility="gone"
             android:layout_alignRight="@+id/activity_surface_view"
             android:textSize="20dp" />
 
@@ -55,24 +56,25 @@
             android:id="@+id/btn_back"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_below="@+id/btn_cal"
             android:layout_alignRight="@+id/btn_start"
-            android:layout_below="@+id/btn_start"
+            android:layout_marginTop="312dp"
+            android:background="#00AAFF"
 
-            android:background="#FFBB97"
+
             android:text="홈으로"
-
-            android:textSize="20dp" />
+            android:textSize="30sp" />
         <Button
             android:id="@+id/btn_cal"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignRight="@+id/btn_start"
-            android:layout_below="@+id/btn_back"
-            android:enabled="false"
-            android:background="#FFBB97"
-            android:text="홈으로"
 
-            android:textSize="20dp" />
+            android:enabled="true"
+            android:background="#FFFF00"
+            android:text="측   정"
+
+            android:textSize="30sp" />
 
     </RelativeLayout>
 

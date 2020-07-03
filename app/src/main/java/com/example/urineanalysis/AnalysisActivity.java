@@ -2,13 +2,13 @@ package com.example.urineanalysis;
 
 import android.Manifest;
 import android.annotation.TargetApi;
+import android.app.Activity;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
-import android.graphics.Camera;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
@@ -66,7 +66,6 @@ import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 
@@ -102,7 +101,7 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
     TextView tx3;
     TextView tx4;
 //    ProgressBar spinner;
-    Button bt_cal;
+    Button btn_detect;
 
     // used to fix camera orientation from 270 degree to 0 degree
     Mat mRgba, mGray;
@@ -139,6 +138,21 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
 //    Point[] protein_p = new Point[6];
     Point[] bilirubin_p = new Point[4];
 //    Point[] urobilinogen_p = new Point[4];
+
+    int frame_num=0;
+    Point p[] = new Point[10];
+
+    Point[] p_1 = new Point[5];
+    Point[] p_2 = new Point[5];
+    Point[] p_3 = new Point[5];
+    Point[] p_4 = new Point[5];
+    Point[] p_5 = new Point[5];
+    Point[] p_6 = new Point[5];
+    Point[] p_7 = new Point[5];
+    Point[] p_8 = new Point[5];
+    Point[] p_9 = new Point[5];
+    Point[] p_10 = new Point[5];
+
 
 
     double[] rgbV_GLOUCOSE = new double[3];
@@ -204,7 +218,7 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
     Point br=new Point(0,0);
 
 
-
+    boolean is_detected=false;
     String msg_rgb;
     String msg_hue, msg_bilirubin;
     TimerHandler timerHandler = new TimerHandler();
@@ -252,7 +266,7 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
         Button bt_stop = findViewById(R.id.btn_TimerStop);
         Button bt_up = findViewById(R.id.btn_TimerUp);
         Button bt_dn = findViewById(R.id.btn_TimerDown);
-        bt_cal= findViewById(R.id.btn_cal);
+        btn_detect = findViewById(R.id.btn_cal);
 
 
 //        iv.setImageResource(R.drawable.line);
@@ -278,59 +292,52 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
 
 
 
-//        drawPoint();
+        drawPoint();
 
 
-        bt_cal.setOnClickListener(new View.OnClickListener() {
+        btn_detect.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                if(!is_detected) {
+                    try {
+                        mViewMode = VIEW_MODE_START;
 
-                //촬영한 비트맵이 존재하면
-                if(bmp!=null){
+                        timerHandler.sendEmptyMessage(MESSAGE_TIMER_START);
 
+                        Timer += 5;
 
-                    //비트맵 복사본을 만들고
-                    final Bitmap mbitmap= bmp;
-                    Utils.bitmapToMat(mbitmap,mRgba);
-
-
-                    //복사본을 mat형식으로 변환한뒤 패턴인식
-                    if(mJavaDetector!=null){
-
-                        MatOfRect bubble_rect = new MatOfRect();
-                        mJavaDetector.detectMultiScale(mRgba,bubble_rect,1.5,1);
-
-                        bubble_array=bubble_rect.toArray();
-
-                        for(int i =0; i<bubble_array.length;i++){
-                            tl.x = bubble_array[i].tl().x;
-                            tl.y = bubble_array[i].tl().y;
-                            br.x = bubble_array[i].br().x;
-                            br.y = bubble_array[i].br().y;
-
-                            Imgproc.rectangle(mRgba,new Point(tl.x,tl.y),new Point(br.x,br.y),new Scalar(255,255,255),2);
-                        }
-
-
-                        //인식후 mat을 Bitmap으로 변환후 이미지 표시.
-                        Utils.matToBitmap(mRgba,mbitmap);
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                ImageView iv= findViewById(R.id.imageView1);
-                                iv.setImageBitmap(mbitmap);
-                            }
-                        });
-
-                        
-
-
-
+                        is_detected=!is_detected;
+                    } catch (Exception e) {
+                        Log.i(TAG, e.toString());
+                        Toast.makeText(getApplicationContext(), "Focusing 실패 다시눌러주세요", Toast.LENGTH_SHORT).show();
                     }
+
+
                 }else{
-                    Toast.makeText(getApplicationContext(),"이미지없음",Toast.LENGTH_SHORT).show();
+                    try {
+                        mViewMode = VIEW_MODE_INIT;
+                        is_detected=!is_detected;
+
+
+//
+                        btn_detect.setText("DETECT");
+
+                        Intent i = new Intent(getApplicationContext(),MainActivity.class);
+                        Toast.makeText(getApplicationContext(),"The data saved sucessfully",Toast.LENGTH_SHORT).show();
+                        timerHandler.sendEmptyMessage(MESSAGE_TIMER_STOP);
+                        count=Timer;
+                        startActivity(i);
+
+                        Toast.makeText(getApplicationContext(), "저장하였습니다.", Toast.LENGTH_SHORT).show();
+
+
+                    } catch (Exception e) {
+                        Log.i(TAG, e.toString());
+                        Toast.makeText(getApplicationContext(), "Focusing 실패 다시눌러주세요", Toast.LENGTH_SHORT).show();
+                    }
 
                 }
+
             }
         });
         btn_back.setOnClickListener(new View.OnClickListener() {
@@ -412,7 +419,7 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
                         ImageView iv = (ImageView) findViewById(R.id.imageView1);
                         iv.setImageBitmap(picture);
                         Log.i(TAG,"RunOnUIThread");
-                        bt_cal.setEnabled(true);
+                        btn_detect.setEnabled(true);
                     }
                 });
                 subimg.release();
@@ -536,102 +543,71 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
     @Override
     public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputFrame) {
 
-        // TODO Auto-genetated method stub
-
         mRgba = inputFrame.rgba();
-        mRgbaT=inputFrame.rgba();
+        mGray = inputFrame.gray();
 
-
-
+        frame_num++;
+//        preprocessor.changeImagePreviewOrientation(mRgba,mRgbaF,mRgbaT);
         final int viewMode = mViewMode;
         switch (viewMode) {
             case VIEW_MODE_START:
-                MatOfRect bubble_rect = new MatOfRect();
-
-                if (mJavaDetector != null) {
-                    mJavaDetector.detectMultiScale(mRgba, bubble_rect, 1.1, 0, 0, new Size(600,400), new Size());
-
-                }
-                bubble_array = bubble_rect.toArray();
-
-                if(true) {
-                    for (int k = 0; k < bubble_array.length; k++) {
-                        tl.x = bubble_array[k].tl().x;
-                        tl.y = bubble_array[k].tl().y;
-                        br.x = bubble_array[k].br().x;
-                        br.y = bubble_array[k].br().y;
-
-
-                        Rect roi=new Rect(tl,br);
-
-                        Mat mRgbaT=new Mat(mRgba,roi);
-
-                        bm= Bitmap.createBitmap(mRgbaT.cols(), mRgbaT.rows(),Bitmap.Config.ARGB_8888);
-                        Utils.matToBitmap(mRgbaT,bm);
-
-                        runOnUiThread(new Runnable() {
-
-                            @Override
-                            public void run() {
-                                ImageView iv = (ImageView) findViewById(R.id.imageView1);
-                                iv.setImageBitmap(bm);
-                                bt_cal.setEnabled(true);
-                            }
-                        });
-
-
-//                        Utils.matToBitmap(mRgbaT,bm);
-//                        points=imageUtils.findPoints(bm,500);
-
-
-
-//                        if(points.length==4) {
-//                            mRgbaT = imageUtils.fourPointTransform(mRgba, points);
-//                            final Bitmap outputBitmap = Bitmap.createBitmap(mRgbaT.cols(), mRgbaT.rows(), Bitmap.Config.ARGB_8888);
-//
-//                            tmp = false;
-//                            //쓰레드로 iv 표시(main이 아니기 떄문에 필요
-//                            runOnUiThread(new Runnable() {
-//
-//                                @Override
-//                                public void run() {
-//                                    ImageView iv = (ImageView) findViewById(R.id.imageView1);
-//                                    iv.setImageBitmap(outputBitmap);
-//                                }
-//                            });
-//                        }
-
-
-                        break;
-                    }
-                }
-
-//                drawRect();
-                drawPoint();;
-
-
 
                 try {
+                    MatOfRect bubble_rect = new MatOfRect();
 
-//                    doProcess();
+
+                    if (mJavaDetector != null) {
+                        mJavaDetector.detectMultiScale(mGray, bubble_rect, 2, 1, 0, new Size(), new Size());
+
+                    }
+                    bubble_array = bubble_rect.toArray();
+
+
+                    for (int k = 0; k < bubble_array.length; k++) {
+
+
+                        if(bubble_array.length>4) break;
+
+                        for (int j=0;j<k;j++){
+                            if(Math.abs(bubble_array[j].x-bubble_array[k].x)<50){
+                                break;
+                            }
+                        }
+
+                        tl_x[k] =bubble_array[k].tl().x;
+                        tl_y[k] =bubble_array[k].tl().y;
+                        br_x[k] =bubble_array[k].br().x;
+                        br_y[k] =bubble_array[k].br().y;
+
+
+                    }
+
+                    if(bubble_array.length==4)
+                        doProcess();
+
+
                 } catch (Exception e) {
-                    mViewMode = VIEW_MODE_INIT;
-                    Log.i("MainActivty", e.toString());
+                    Intent i =new Intent(getApplicationContext(),MainActivity.class);
+                    startActivityForResult(i, Activity.RESULT_OK);
+                    Log.i(TAG, e.toString());
                 }
-//                doProcess();
                 break;
             case VIEW_MODE_INIT:
-                break;
 
+                Imgproc.rectangle(mRgba,new Point(900,300),new Point(950,350),new Scalar(255,255,255),2,1);
+
+                double[] tmpavg=average_RGB(925,325);
+                double[] rgb=mRgba.get(325,925);
+                double rst=calculateHue.getH(tmpavg);
+                Imgproc.putText(mRgba,String.format("RGB :%.1f %.1f %.1f H: %.3f",rgb[0],rgb[1],rgb[2],rst),new Point(850,300),1,2,new Scalar(255,255,255));
+                break;
         }
 
 
         Imgproc.rectangle(mRgba, new Point(cropped_x, cropped_y), new Point(cropped_x + cropped_w, cropped_y + cropped_h), new Scalar(255, 255, 255), 2);
 
-//        for(int i=0;i<4;i++){
-//            Imgproc.rectangle(mRgba, new Point(tl_x[i], tl_y[i]), new Point(br_x[i], br_y[i]), new Scalar(255, 255, 255), 2);
-//        }
-        
+
+
         return mRgba;
 
     }
@@ -761,146 +737,117 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
 
     protected void doProcess() {
 
-        for (int i=0;i<10;i++){
-            Imgproc.rectangle(mRgba,new Point(30,30*(i+1)+40*(i)), new Point(400,30*(i+1)+40*(i+1)),new Scalar(255,255,255),2);
-            Imgproc.rectangle(mRgba,new Point(560,30*(i+1)+40*(i)), new Point(930,30*(i+1)+40*(i+1)),new Scalar(255,255,255),2);
-            Imgproc.circle(mRgba, new Point(480, 50+70*(i)), (int) (20), new Scalar(255, 255, 255));
+        Double array_x[] = new Double[4];
+        Double array_y[] = new Double[4];
+        Double maxx = 0.0, maxy = 0.0, minx = 10000.0, miny = 10000.0;
+
+        //각 꼭지점 위치 정보 모음 (순서 상관 없음)
+        for (int k = 0; k < bubble_array.length; k++) {
+            array_x[k] = (bubble_array[k].tl().x + bubble_array[k].br().x) / 2;
+            array_y[k] = (bubble_array[k].tl().y + bubble_array[k].br().y) / 2;
+        }
+
+        //11,1,5,7시 방향을 0 1 2 3 인덱스로 맞추기 위해 정렬
+        double tmp_max = 0, tmp_min = 1000000;
+        int index_2 = 0, index_0 = 0;
+        for (int k = 0; k < bubble_array.length; k++) {
+            if ((array_x[k] + array_y[k]) > tmp_max) {
+                tmp_max = array_x[k] + array_y[k];
+                index_2 = k;
+            }
+
+
+            if ((array_x[k] + array_y[k]) < tmp_min) {
+                tmp_min = array_x[k] + array_y[k];
+                index_0 = k;
+            }
+        }
+
+        int index_1 = 0, index_3 = 0;
+        double tmp_max2 = 0, tmp_min2 = 100000;
+        for (int k = 0; k < 4; k++) {
+            if (k == index_2 || k == index_0) {
+                continue;
+            }
+
+            if (array_x[k] > tmp_max2) {
+                tmp_max2 = array_x[k];
+                index_1 = k;
+            }
+
+            if (array_x[k] < tmp_min2) {
+                tmp_min2 = array_x[k];
+                index_3 = k;
+            }
+
+        }
+        sorted_x[0] = array_x[index_0];
+        sorted_y[0] = array_y[index_0];
+        sorted_x[1] = array_x[index_1];
+        sorted_y[1] = array_y[index_1];
+        sorted_x[2] = array_x[index_2];
+        sorted_y[2] = array_y[index_2];
+        sorted_x[3] = array_x[index_3];
+        sorted_y[3] = array_y[index_3];
+
+        double middlex = 0.0, middley = 0.0;
+        double[] loc_x = new double[4];
+        double[] loc_y = new double[6];
+
+        double distanceX = (sorted_x[1] - sorted_x[0]);
+
+        double distanceY = (sorted_y[1] - sorted_y[0]);
+        double distance = Math.sqrt(distanceX * distanceX + distanceY * distanceY);
+
+        double ratio = distance / 1000;
+
+        double angle = calculateAngle();
+
+        middlex = (sorted_x[0] + sorted_x[2]) / 2;
+        middley = (sorted_y[0] + sorted_y[2]) / 2;
+
+        loc_x[0] = middlex - 50;
+        loc_x[1] = middlex + 50;
+        loc_y[0] = middley - 50;
+        loc_y[1] = middley + 50;
+
+
+        double tmpwith=sorted_x[1]-sorted_x[0];
+        double tmpheight=sorted_y[2]-sorted_y[1];
+
+        for (int i=0;i<11;i++){
+
+//            double x=middlex+(Math.cos(angle/2) * p[i].x - Math.sin(angle/2) * p[i].y)*ratio;
+//            double y=middley+ (Math.sin(angle/2) * p[i].x + Math.cos(angle/2) * p[i].y)*ratio;
+
+            double x=tmpwith/17.3 * (i) +140;
+
+
+            double y=0;
+            Point sp=new Point(sorted_x[0] + x,sorted_y[0] +20);
+            Point np=new Point(sp.x+40,sp.y+350);
+
+
+            Imgproc.rectangle(mRgba,sp,np,new Scalar(255,255,255),2);
+//            Imgproc.circle(mRgba,new Point(np.x-20,np.y+170),10,new Scalar(255,255,255),2);
+//            Imgproc.circle(mRgba, new Point( x,y+440), (int) (20), new Scalar(255, 255, 255));
+
+//            Imgproc.rectangle(mRgba,new Point(     30*(i+1)+40*(i),30), new Point(30*(i+1)+40*(i+1),800),new Scalar(255,255,255),2);
+//
+//            Imgproc.circle(mRgba, new Point( 50+70*(i),880), (int) (20), new Scalar(255, 255, 255));
 
         }
 
 
 
-//            Double array_x[] = new Double[4];
-//            Double array_y[] = new Double[4];
-//            Double maxx = 0.0, maxy = 0.0, minx = 10000.0, miny = 10000.0;
-//
-//            //각 꼭지점 위치 정보 모음 (순서 상관 없음)
-//            for (int k = 0; k < bubble_array.length; k++) {
-//                array_x[k] = (bubble_array[k].tl().x + bubble_array[k].br().x) / 2;
-//                array_y[k] = (bubble_array[k].tl().y + bubble_array[k].br().y) / 2;
-//            }
-//
-//
-//
-//            //11,1,5,7시 방향을 0 1 2 3 인덱스로 맞추기 위해 정렬
-//            double tmp_max = 0, tmp_min = 1000000;
-//            int index_2 = 0, index_0 = 0;
-//            for (int k = 0; k < bubble_array.length; k++) {
-//                if ((array_x[k] + array_y[k]) > tmp_max) {
-//                    tmp_max = array_x[k] + array_y[k];
-//                    index_2 = k;
-//                }
-//
-//
-//                if ((array_x[k] + array_y[k]) < tmp_min) {
-//                    tmp_min = array_x[k] + array_y[k];
-//                    index_0 = k;
-//                }
-//            }
-//
-//            int index_1 = 0, index_3 = 0;
-//            double tmp_max2 = 0, tmp_min2 = 100000;
-//            for (int k = 0; k < 4; k++) {
-//                if (k == index_2 || k == index_0) {
-//                    continue;
-//                }
-//
-//                if (array_x[k] > tmp_max2) {
-//                    tmp_max2 = array_x[k];
-//                    index_1 = k;
-//                }
-//
-//                if (array_x[k] < tmp_min2) {
-//                    tmp_min2 = array_x[k];
-//                    index_3 = k;
-//                }
-//
-//            }
-//
-//
-//            sorted_x[0] = array_x[index_0];
-//            sorted_y[0] = array_y[index_0];
-//            sorted_x[1] = array_x[index_1];
-//            sorted_y[1] = array_y[index_1];
-//            sorted_x[2] = array_x[index_2];
-//            sorted_y[2] = array_y[index_2];
-//            sorted_x[3] = array_x[index_3];
-//            sorted_y[3] = array_y[index_3];
-//
-//            String sor = String.format(Locale.KOREA, "%.2f", sorted_x[0]);
-//
-            double middlex = 0.0, middley = 0.0;
-//            double[] loc_x = new double[4];
-//            double[] loc_y = new double[6];
-//
-//            double distanceX = (sorted_x[1] - sorted_x[0]);
-//
-//            double distanceY = (sorted_y[1] - sorted_y[0]);
-//            double distance = Math.sqrt(distanceX * distanceX + distanceY * distanceY);
-            double distance = 2.0;
-
-            double ratio =1.0;
 
 
 
-            middlex = 200;
-            middley =200;
 
-
-
-            int size = 50;
-            double x = middlex;
-            double y = middley;
-
-
-//            rgbV_GLOUCOSE = average_RGB((int) p[2].y, (int) p[2].x);
-
-
-            for (int i = 0; i <= 4; i++) {
-                //angle만큼 회전이동 후 middlex,middley만큼 평행이동.
-                //x'=xcos(a)-ysin(a) , y' = xsin(a) + ycos(a)
-
-
-//                if (i == 0) {
-//                    rgbV_GLOUCOSE = average_RGB((int) p[2].y, (int) p[2].x);
-//                }
-//                if (i == 1) {
-//                    rgbV_PROTEIN = average_RGB((int) p[2].y, (int) p[2].x);
-//                }
-//                if (i == 2) {
-//                    rgbV_BILIRUBIN = average_RGB((int) x, (int) y);
-//                }
-//                if (i == 3) {
-//                    rgbV_UROBILINOGEN = average_RGB((int) x, (int) y);
-//                }
-//                if (i == 4) {
-//                    rgbV_REFERENCE = average_RGB((int) x, (int) y);
-//                }
-            }
-
-
-//            for (int i = 0; i < 4; i++) {
-//                //angle만큼 회전이동 후 middlex,middley만큼 평행이동.
-//                //x'=xcos(a)-ysin(a) , y' = xsin(a) + ycos(a)
-//                double x = middlex + (Math.cos(angle) * bilirubin_p[i].x - Math.sin(angle) * bilirubin_p[i].y) * ratio;
-//                double y = middley + (Math.sin(angle) * bilirubin_p[i].x + Math.cos(angle) * bilirubin_p[i].y) * ratio;
-//
-//
-//                rgbV_bilirubins[i] = average_RGB((int) x, (int) y);
-//                Imgproc.circle(mRgba, new Point(x, y), (int) (10 * ratio), new Scalar(255, 255, 255));
-//            }
 
 
             CalculateHue calculateHue = new CalculateHue();
-//            Imgproc.putText(mRgba, "0", new Point(sorted_x[0], sorted_y[0]), 1, 3, new Scalar(255, 0, 0), 2);
-//            Imgproc.putText(mRgba, "1", new Point(sorted_x[1], sorted_y[1]), 1, 3, new Scalar(255, 0, 0), 2);
-//            Imgproc.putText(mRgba, "2", new Point(sorted_x[2], sorted_y[2]), 1, 3, new Scalar(255, 0, 0), 2);
-//            Imgproc.putText(mRgba, "3", new Point(sorted_x[3], sorted_y[3]), 1, 3, new Scalar(255, 0, 0), 2);
 
-//            Imgproc.putText(mRgba, String.format(Locale.KOREA, "height : %.2f", 10 * (290 / distance)), new Point(0, 100), 1, 2, new Scalar(255, 0, 0), 2);
-//            Imgproc.putText(mRgba, String.format(Locale.KOREA, "angle : %.2f", angle), new Point(0, 200), 1, 2, new Scalar(255, 0, 0), 2);
-//            Imgproc.putText(mRgba, String.format("hue : %.2f", calculateHue.getH(rgbV_BILIRUBIN)), new Point(0, 200), 1, 2, new Scalar(255, 0, 0), 2);
-//            Imgproc.putText(mRgba, String.format("rgb : %.2f %.2f %.2f",rgbV_BILIRUBIN[0],rgbV_BILIRUBIN[1],rgbV_BILIRUBIN[2]), new Point(0, 300), 1, 2, new Scalar(255, 0, 0), 2);
 
             hue_1=calculateHue.getH(rgbV_GLOUCOSE);
             hue_2=calculateHue.getH(rgbV_PROTEIN);
@@ -934,7 +881,19 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
 
         return radian;
     }
+    void drawPoint() {
 
+        int step = 25;
+        int loc=35;
+        for (int i = 0; i <= 9; i++) {
+            p[i]=new Point(-400+step*i,-200);
+        }
+
+
+
+
+
+    }
 
     private void writeToFileAll() {
 
@@ -1201,16 +1160,12 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
 
 
     }
-    void drawPoint() {
-
-    Imgproc.rectangle(mRgba,new Point(50,50),new Point(850,500),new Scalar(255,255,255));
-
-    }
 
     int countflag = 0;
 
 
     private class TimerHandler extends Handler {
+
         @Override
         public void handleMessage(Message msg) {
             switch (msg.what) {
@@ -1223,11 +1178,7 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
 
                 case MESSAGE_TIMER_REPEAT:
 
-                    if (count > Timer) {
-//                        tx1.setText("save Finished");
-                        this.sendEmptyMessageDelayed(MESSAGE_TIMER_STOP, 1000);
 
-                    } else {
 //                        writeToFile();
 
                         msg_rgb = "";
@@ -1278,102 +1229,38 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
                         Log.i(TAG,String.format("%.2f %.2f %.2f %.2f",avg_hueValue1,avg_hueValue2,avg_hueValue3,avg_hueValue4));
 //                        tx1.setText("save remained : " + Integer.toString((Timer - count) / 10));
                         count += 10;
-                    }
 
 
-                       if (countflag == 0) {
-                            countflag++;
 
-                        this.sendEmptyMessageDelayed(MESSAGE_TIMER_REPEAT, 500);
 
-                    } else {
-                        this.sendEmptyMessageDelayed(MESSAGE_TIMER_REPEAT, 1000);
-                    }
+                        this.sendEmptyMessageDelayed(MESSAGE_TIMER_STOP, 3000);
 
                     break;
 
                 case MESSAGE_TIMER_STOP:
 //                    Toast.makeText(getApplicationContext(), "Timer Stoped", Toast.LENGTH_SHORT).show();
 
-                    countflag = 0;
-                    msg_rgb = "";
-                    msg_hue = "";
-                    msg_bilirubin = "";
-                    hue_avg3.clear();
+                    Intent i =new Intent(getApplicationContext(),ResultActivity.class);
+                    i.putExtra("tv2",3);
+                    i.putExtra("tv3",3);
+                    i.putExtra("tv4",3);
+                    i.putExtra("tv5",3);
+                    i.putExtra("tv6",3);
+                    i.putExtra("tv7","N");
+                    i.putExtra("tv8",3);
+                    i.putExtra("tv9",3);
+                    i.putExtra("tv10",3);
+                    i.putExtra("tv11",3);
+                    i.putExtra("tv12",3);
 
-
-                    writeToFileAll();
-
-
-                    this.sendEmptyMessageDelayed(MESSAGE_TIMER_SAVE, 500);
+                    startActivity(i);
 
                     this.removeMessages(MESSAGE_TIMER_REPEAT);
 
 
 
                     break;
-//                case MESSAGE_TIMER_SAVE:
-//                    Bitmap bmp = null;
-//                    Mat subimg = mRgba;
-//                    try {
-//                        bmp = Bitmap.createBitmap(subimg.cols(), subimg.rows(), Bitmap.Config.ARGB_8888);
-//                        Utils.matToBitmap(subimg, bmp);
-//                    } catch (CvException e) {
-//                        Log.d(TAG, e.getMessage());
-//                    }
-//
-//
-//                    subimg.release();
-////                mRgba.release();
-//                    FileOutputStream out = null;
-//
-//                    long now = System.currentTimeMillis();
-//                    Date date = new Date(now);
-//                    SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd-HHmmss", Locale.KOREA);
-//                    String filename = "1.jpg";
-//
-//
-//                    File sd = new File(Environment.getExternalStorageDirectory().getPath() + "/UrineImages/");
-//
-//
-//                    boolean success = true;
-//                    if (!sd.exists()) {
-//                        success = sd.mkdir();
-//                    }
-//                    if (success) {
-//                        File dest = new File(sd, filename);
-//                        try {
-//                            if(dest.exists())
-//                                dest.delete();
-//                            out = new FileOutputStream(dest);
-//                            bmp.compress(Bitmap.CompressFormat.JPEG, 100, out);
-//
-//                            // sendBroadCast :: 시스템db에 이미지가 있다는 것을 전달. (나중에 검색하기위해서)
-//                            getApplicationContext().sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(dest)));
-//                        } catch (NullPointerException e) {
-//                            e.printStackTrace();
-//                            Log.d(TAG, e.getMessage());
-//                        } catch (FileNotFoundException e) {
-//                            e.printStackTrace();
-//                            Log.d(TAG, e.getMessage());
-//
-//                        } finally {
-//                            try {
-//                                if (out != null) {
-//                                    out.close();
-//                                    Log.d(TAG, "OK!!");
-//                                }
-//                            } catch (IOException e) {
-//                                Log.d(TAG, e.getMessage() + "Error");
-//                                e.printStackTrace();
-//                            }
-//                        }
-//                    }
-//                    pb.setVisibility(View.GONE);
-//                    mViewMode=VIEW_MODE_INIT;
-//                    onResume();
-//                    Intent i = new Intent(getApplicationContext(),ResultActivity.class);
-//                    startActivity(i);
+
             }
         }
 
