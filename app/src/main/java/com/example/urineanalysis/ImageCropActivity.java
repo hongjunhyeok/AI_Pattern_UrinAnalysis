@@ -1,14 +1,18 @@
 package com.example.urineanalysis;
 
+import android.app.Activity;
+import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.view.Window;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.Toast;
 
-public class ImageCropActivity extends AppCompatActivity {
+public class ImageCropActivity extends Activity {
 
     private static final String TAG = ImageCropActivity.class.getSimpleName();
 
@@ -17,22 +21,21 @@ public class ImageCropActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        //타이틀바 없애기
+        requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.activity_image_crop);
 
-        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 
-        cropImage = (ImageView)findViewById(R.id.cropped_image);
-
-        Bundle bundle = getIntent().getExtras();
-        if(bundle == null){
-            Toast.makeText(this, "Whoops! image not found", Toast.LENGTH_LONG).show();
-        }else{
-            String imagePath = bundle.getString("OPEN_IMAGE");
-            Bitmap imageBitmap = BitmapFactory.decodeFile(imagePath);
-            if(imageBitmap != null){
-                cropImage.setImageBitmap(imageBitmap);
-            }
-        }
+        Intent intent = getIntent();
+        byte[] arr = getIntent().getByteArrayExtra("image");
+        Bitmap image = BitmapFactory.decodeByteArray(arr, 0, arr.length);
+        cropImage.setImageBitmap(image);
     }
+    @Override
+    public void onBackPressed() {
+        //안드로이드 백버튼 막기
+        return;
+    }
+
 
 }

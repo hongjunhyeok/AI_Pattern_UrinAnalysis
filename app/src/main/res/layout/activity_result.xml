@@ -1,29 +1,394 @@
-<?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:paddingLeft="16dp"
-    android:paddingRight="16dp"
+    android:orientation="vertical">
 
-    tools:context=".MainActivity">
+        <TextView
+            android:id="@+id/textView8"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="분 석 결 과"
+            android:textAlignment="center"
+            android:background="#0000FF"
+            android:textColor="#FFFFFF"
+            android:textSize="30dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="horizontal">
 
 
-    <ImageView
-        android:id="@+id/ImageView_result"
-        android:layout_alignParentLeft="true"
-        android:layout_width="wrap_content"
-        android:layout_height="match_parent"
-        android:text="ImageView" />
 
-    <TextView
-        android:id="@+id/textView_result"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentRight="true"
-        android:layout_centerHorizontal="true"
-        android:text="TextView" />
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_weight="0.48"
+                    android:layout_marginLeft="20dp"
+                    android:orientation="vertical">
 
-    />
-</RelativeLayout>
+                        <TextView
+                            android:id="@+id/textView9"
+                            android:layout_width="104dp"
+                            android:layout_height="wrap_content"
+                            android:padding="10dp"
+
+                            android:text="분석물질"
+                            android:textAlignment="center"
+                            android:textSize="20dp" />
+
+                        <TextView
+
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:padding="10dp"
+                            android:textAlignment="textEnd"
+                            android:text="잠혈" />
+
+                        <TextView
+
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:padding="10dp"
+                            android:textAlignment="textEnd"
+                            android:text="빌리루빈" />
+
+                        <TextView
+
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:textAlignment="textEnd"
+                            android:padding="10dp"
+                            android:text="우로빌리노겐" />
+
+                        <TextView
+                            android:textAlignment="textEnd"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:padding="10dp"
+                            android:text="케톤체" />
+
+                        <TextView
+                            android:textAlignment="textEnd"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:padding="10dp"
+                            android:text="단백뇨" />
+
+                        <TextView
+                            android:textAlignment="textEnd"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:padding="10dp"
+                            android:text="아질산염" />
+
+
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_weight="0.54"
+
+                    android:orientation="vertical">
+
+                        <TextView
+
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:padding="10dp"
+                            android:text="농도"
+                            android:textSize="20dp"
+                            android:textAlignment="textEnd" />
+
+                        <TextView
+                            android:id="@+id/tv_2"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:padding="10dp"
+                            android:text="0"
+                            android:textAlignment="textEnd" />
+
+                        <TextView
+                            android:id="@+id/tv_3"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:padding="10dp"
+                            android:text="5"
+                            android:textAlignment="textEnd" />
+
+                        <TextView
+                            android:id="@+id/tv_4"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:padding="10dp"
+                            android:text="8"
+                            android:textAlignment="textEnd" />
+
+                        <TextView
+                            android:id="@+id/tv_5"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:padding="10dp"
+                            android:text="0.4"
+                            android:textAlignment="textEnd" />
+
+                        <TextView
+                            android:id="@+id/tv_6"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:padding="10dp"
+                            android:text="1"
+                            android:textAlignment="textEnd" />
+
+                        <TextView
+                            android:id="@+id/tv_7"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:padding="10dp"
+
+                            android:text="양성"
+                            android:textAlignment="textEnd" />
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_weight="0.5"
+
+                    android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/textView11"
+                            android:textSize="20dp"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:padding="10dp" />
+
+                        <TextView
+
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:padding="10dp"
+                            android:text="Ery/𝜇𝑙" />
+
+                        <TextView
+
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:padding="10dp"
+                            android:text="mg/100mL" />
+
+                        <TextView
+
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:padding="10dp"
+
+                            android:text="mg/100mL" />
+
+                        <TextView
+
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:padding="10dp"
+                            android:text="mg/100mL" />
+
+                        <TextView
+
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:padding="10dp"
+                            android:text="mg/100mL" />
+
+                        <TextView
+
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:padding="10dp" />
+
+
+                </LinearLayout>
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_weight="0.5"
+
+                    android:orientation="vertical">
+
+
+
+                </LinearLayout>
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_weight="0.5"
+                    android:orientation="vertical">
+
+                        <TextView
+
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:textAlignment="center"
+                            android:textSize="20dp"
+                            android:padding="10dp"
+                            android:text="분석물질" />
+
+
+
+                        <TextView
+                            android:textAlignment="textEnd"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:padding="10dp"
+                            android:text="포도당" />
+
+                        <TextView
+                            android:textAlignment="textEnd"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:padding="10dp"
+                            android:text="pH" />
+
+                        <TextView
+                            android:textAlignment="textEnd"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:padding="10dp"
+                            android:text="S.G" />
+
+                        <TextView
+                            android:textAlignment="textEnd"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:padding="10dp"
+                            android:text="백혈구" />
+
+                        <TextView
+                            android:textAlignment="textEnd"
+                            android:layout_width="match_parent"
+                            android:padding="10dp"
+                            android:layout_height="wrap_content"
+                            android:text="아스코르브 산" />
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_weight="0.54"
+
+                    android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/textView10"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="농도"
+                            android:textSize="20dp"
+                            android:padding="10dp"
+                            android:textAlignment="textEnd"/>
+
+
+
+                        <TextView
+                            android:id="@+id/tv_8"
+                            android:textAlignment="textEnd"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:padding="10dp"
+                            android:text="5.5" />
+
+                        <TextView
+                            android:id="@+id/tv_9"
+                            android:textAlignment="textEnd"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:padding="10dp"
+                            android:text="5" />
+
+                        <TextView
+                            android:id="@+id/tv_10"
+                            android:textAlignment="textEnd"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:padding="10dp"
+                            android:text="1016" />
+
+                        <TextView
+                            android:id="@+id/tv_11"
+                            android:layout_width="match_parent"
+                            android:textAlignment="textEnd"
+                            android:layout_height="wrap_content"
+                            android:padding="10dp"
+                            android:text="25" />
+
+                        <TextView
+                            android:id="@+id/tv_12"
+                            android:textAlignment="textEnd"
+                            android:layout_width="match_parent"
+                            android:padding="10dp"
+                            android:layout_height="wrap_content"
+                            android:text="5" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_weight="0.5"
+
+                    android:orientation="vertical">
+
+                        <TextView
+                            android:textSize="20dp"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:padding="10dp"
+                   />
+
+
+                        <TextView
+
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:padding="10dp"
+                            android:text="mg/100mL" />
+
+                        <TextView
+
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:padding="10dp"
+                             />
+
+                        <TextView
+
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:padding="10dp"
+                         />
+
+                        <TextView
+
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:padding="10dp"
+                            android:text="WBC/𝜇𝑙"
+                            />
+
+                        <TextView
+
+                            android:layout_width="match_parent"
+                            android:padding="10dp"
+                            android:text="mg/100mL"
+                            android:layout_height="wrap_content"
+                         />
+                </LinearLayout>
+        </LinearLayout>
+
+
+</LinearLayout>

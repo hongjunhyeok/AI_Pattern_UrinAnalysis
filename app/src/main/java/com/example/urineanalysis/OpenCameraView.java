@@ -75,10 +75,10 @@ public class OpenCameraView extends JavaCameraView implements Camera.PictureCall
 
 
     public void takePicture(final String fileName) {
+
         Log.i(TAG, "Taking picture");
         this.mPictureFileName = fileName;
         mCamera.setPreviewCallback(null);
-
         mCamera.takePicture(null, null, this);
     }
 

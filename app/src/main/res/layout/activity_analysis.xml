@@ -3,7 +3,7 @@
     xmlns:opencv="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:orientation="horizontal"
+    android:orientation="vertical"
     android:layout_height="match_parent">
 
     <!-- The primary full-screen view. This can be replaced with whatever view
@@ -11,27 +11,13 @@
          TextureView, etc. -->
 
 
-    <LinearLayout
+    <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_weight="1.5"
+        android:layout_margin="0dp"
         android:orientation="horizontal">
 
-    </LinearLayout>
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_weight="1"
-        android:orientation="horizontal">
-        <LinearLayout
-            android:orientation="horizontal"
-            android:layout_width="100dp"
-            android:padding="10dp"
-            android:layout_height="match_parent">
-
-
-        </LinearLayout>
 
 
         <com.example.urineanalysis.OpenCameraView
@@ -39,42 +25,73 @@
             android:id="@+id/activity_surface_view"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:padding="100dp"
             opencv:camera_id="any"
             opencv:show_fps="true" />
 
+        <ImageView
+            android:id="@+id/imageView1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
 
-
-
-    </LinearLayout>
-
-    <LinearLayout
-        android:layout_weight="1.5"
-
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical">
+        <!--<ProgressBar-->
+        <!--android:id="@+id/anlysis_progressbar"-->
+        <!--style="?android:attr/progressBarStyle"-->
+        <!--android:layout_centerVertical="true"-->
+        <!--android:layout_centerHorizontal="true"-->
+        <!--android:layout_width="wrap_content"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:visibility="invisible"-->
+        <!--android:layout_weight="1" />-->
+        <Button
+            android:id="@+id/btn_start"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="#FFBB97"
+            android:text="측    정"
+            android:visibility="gone"
+            android:layout_alignRight="@+id/activity_surface_view"
+            android:textSize="20dp" />
 
         <Button
-            android:id="@+id/btn_save"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            android:text="Save" />
+            android:id="@+id/btn_back"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/btn_cal"
+            android:layout_alignRight="@+id/btn_start"
+            android:layout_marginTop="312dp"
+            android:background="#00AAFF"
+
+
+            android:text="홈으로"
+            android:textSize="30sp" />
+        <Button
+            android:id="@+id/btn_cal"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignRight="@+id/btn_start"
+
+            android:enabled="true"
+            android:background="#FFFF00"
+            android:text="측   정"
+
+            android:textSize="30sp" />
+
+    </RelativeLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="horizontal">
 
         <Button
             android:id="@+id/btn_TimerStop"
             android:layout_width="match_parent"
-            android:layout_height="0dp"
+            android:layout_height="wrap_content"
             android:layout_weight="1"
+            android:visibility="gone"
             android:text="Stop" />
 
-        <Button
-            android:id="@+id/btn_detect"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            android:text="Detect" />
+
 
 
         <TextView
@@ -82,46 +99,56 @@
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
-            android:text="Glucose"
-            android:textSize="10sp" />
+            android:layout_marginTop="40dp"
+            android:text="[측정] 버튼을 누른 후\n 잠시만 기다려 주세요"
+            android:textSize="18dp" />
 
         <TextView
             android:id="@+id/text2"
             android:layout_width="match_parent"
-            android:layout_height="0dp"
+            android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Protein"
-            android:textSize="10sp" />
+            android:text="단백질"
+            android:textSize="15dp"
+            android:visibility="gone"/>
 
         <TextView
             android:id="@+id/text3"
             android:layout_width="match_parent"
-            android:layout_height="0dp"
+            android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="pH"
-            android:textSize="10sp" />
+            android:text="빌리루빈"
+            android:textSize="15dp"
+            android:visibility="gone"/>
 
         <TextView
             android:id="@+id/text4"
             android:layout_width="match_parent"
-            android:layout_height="0dp"
+            android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="RBC"
-            android:textSize="10sp" />
+            android:text="우로빌리노겐"
+            android:textSize="15dp"
+            android:visibility="gone"/>
+
+
 
         <Button
             android:id="@+id/btn_TimerUp"
             android:layout_width="match_parent"
-            android:layout_height="0dp"
+            android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="+" />
+            android:visibility="gone"
+            />
 
         <Button
             android:id="@+id/btn_TimerDown"
             android:layout_width="match_parent"
-            android:layout_height="0dp"
+            android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="-" />
+
+            android:visibility="gone"
+
+            />
 
     </LinearLayout>
 
