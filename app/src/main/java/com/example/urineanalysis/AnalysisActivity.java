@@ -66,20 +66,11 @@ import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 
 import com.example.urineanalysis.utils.preprocess.ImagePreprocessor;
-
-
-
-
-
-
-//https://heartbeat.fritz.ai/working-with-the-opencv-camera-for-android-rotating-orienting-and-scaling-c7006c3e1916
-
-
-
 
 
 public class AnalysisActivity extends AppCompatActivity implements CameraBridgeViewBase.CvCameraViewListener2 {
@@ -100,7 +91,7 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
     TextView tx2;
     TextView tx3;
     TextView tx4;
-//    ProgressBar spinner;
+
     Button btn_detect;
 
     // used to fix camera orientation from 270 degree to 0 degree
@@ -112,63 +103,29 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
     boolean writeFlag=true;
 
     private CascadeClassifier mJavaDetector;
-    private ImagePreprocessor preprocessor;
     private CalculateHue calculateHue;
 
 
     // RGB detect
 
     public int Timer = 10;
-    public int time = 0;
-    public double hue_value=0.0;
 
-    Bitmap bm=null;
-    Bitmap bmp=null;
 
     int count = 0;
 
     //{{{{do process
-    Point middleLine_from[]=new Point[12];
-    Point middleLine_to[] = new Point[12];
 
 
-    Point[] reagents[] = new Point[12][6];
-
-    //    Point[] gloucose_p = new Point[6];
-//    Point[] protein_p = new Point[6];
     Point[] bilirubin_p = new Point[4];
-//    Point[] urobilinogen_p = new Point[4];
 
     int frame_num=0;
-    Point p[] = new Point[10];
-
-    Point[] p_1 = new Point[5];
-    Point[] p_2 = new Point[5];
-    Point[] p_3 = new Point[5];
-    Point[] p_4 = new Point[5];
-    Point[] p_5 = new Point[5];
-    Point[] p_6 = new Point[5];
-    Point[] p_7 = new Point[5];
-    Point[] p_8 = new Point[5];
-    Point[] p_9 = new Point[5];
-    Point[] p_10 = new Point[5];
 
 
+;
+    double[][] colorbandHue = new double[11][4];
+    double[] stripHue = new double[11];
+    double[] resultIndex= new double[11];
 
-    double[] rgbV_GLOUCOSE = new double[3];
-    double[] rgbV_PROTEIN = new double[3];
-    double[] rgbV_BILIRUBIN = new double[3];
-    double[] rgbV_UROBILINOGEN = new double[3];
-    double[] rgbV_1 = new double[3];
-    double[] rgbV_2 = new double[3];
-    double[] rgbV_3= new double[3];
-    double[] rgbV_4 = new double[3];
-    double[] rgbV_5 = new double[3];
-    double[] rgbV_6 = new double[3];
-    double[] rgbV_7= new double[3];
-    double[] rgbV_8 = new double[3];
-    double[] rgbV_9= new double[3];
-    double[] rgbV_10 = new double[3];
 
     double[] rgbV_REFERENCE = new double[3];
     double[][] rgbV_bilirubins = new double[4][3];
@@ -180,35 +137,6 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
     Double br_y[] = new Double[4];
 
 
-
-    double hue_1=0,hue_2=0,hue_3=0,hue_4 = 0;
-
-
-    ArrayList<Double> hue_avg1 = new ArrayList<>();
-    ArrayList<Double> hue_avg2 = new ArrayList<>();
-    ArrayList<Double> hue_avg3 = new ArrayList<>();
-    ArrayList<Double> hue_avg4 = new ArrayList<>();
-    ArrayList<Double> hue_avg5 = new ArrayList<>();
-    ArrayList<Double> hue_avg6 = new ArrayList<>();
-    ArrayList<Double> hue_avg7 = new ArrayList<>();
-    ArrayList<Double> hue_avg8 = new ArrayList<>();
-    ArrayList<Double> hue_avg9 = new ArrayList<>();
-    ArrayList<Double> hue_avg10 = new ArrayList<>();
-
-
-
-
-
-    ArrayList<Double> dbH1 = new ArrayList<>();
-    ArrayList<Double> dbH2 = new ArrayList<>();
-    ArrayList<Double> dbH3 = new ArrayList<>();
-    ArrayList<Double> dbH4 = new ArrayList<>();
-    ArrayList<Double> dbH5 = new ArrayList<>();
-    ArrayList<Double> dbH6 = new ArrayList<>();
-    ArrayList<Double> dbH7 = new ArrayList<>();
-    ArrayList<Double> dbH8 = new ArrayList<>();
-    ArrayList<Double> dbH9 = new ArrayList<>();
-    ArrayList<Double> dbH10 = new ArrayList<>();
 
 
 //}}}}
@@ -232,16 +160,22 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
 
     ImageUtils imageUtils = new ImageUtils();
 
+
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        preprocessor = new ImagePreprocessor();
+
         calculateHue = new CalculateHue();
 
+
+        ///////전체타이틀
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
                 WindowManager.LayoutParams.FLAG_FULLSCREEN);
         setContentView(R.layout.activity_analysis);
+        //전체타이틀/////////////
 
         Dexter.withActivity(this)
                 .withPermissions(Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.CAMERA)
@@ -291,14 +225,10 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
         mOpenCvCameraView.setMaxFrameSize(5000, 5000);
 
 
-
-        drawPoint();
-
-
         btn_detect.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if(!is_detected) {
+                if (!is_detected) {
                     try {
                         mViewMode = VIEW_MODE_START;
 
@@ -306,26 +236,26 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
 
                         Timer += 5;
 
-                        is_detected=!is_detected;
+                        is_detected = !is_detected;
                     } catch (Exception e) {
                         Log.i(TAG, e.toString());
                         Toast.makeText(getApplicationContext(), "Focusing 실패 다시눌러주세요", Toast.LENGTH_SHORT).show();
                     }
 
 
-                }else{
+                } else {
                     try {
                         mViewMode = VIEW_MODE_INIT;
-                        is_detected=!is_detected;
+                        is_detected = !is_detected;
 
 
 //
                         btn_detect.setText("DETECT");
 
-                        Intent i = new Intent(getApplicationContext(),MainActivity.class);
-                        Toast.makeText(getApplicationContext(),"The data saved sucessfully",Toast.LENGTH_SHORT).show();
+                        Intent i = new Intent(getApplicationContext(), MainActivity.class);
+                        Toast.makeText(getApplicationContext(), "The data saved sucessfully", Toast.LENGTH_SHORT).show();
                         timerHandler.sendEmptyMessage(MESSAGE_TIMER_STOP);
-                        count=Timer;
+                        count = Timer;
                         startActivity(i);
 
                         Toast.makeText(getApplicationContext(), "저장하였습니다.", Toast.LENGTH_SHORT).show();
@@ -343,141 +273,110 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
         btn_back.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent i =new Intent(getApplicationContext(),MainActivity.class);
+                Intent i = new Intent(getApplicationContext(), MainActivity.class);
                 startActivity(i);
             }
         });
 
-        bt_stop.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                mViewMode = VIEW_MODE_INIT;
-                String tmpH_uro = "";
-
-
-//                writeToFileAll();
-                timerHandler.sendEmptyMessage(MESSAGE_TIMER_STOP);
-            }
-        });
-
-
-        bt_up.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Timer += 100;
-                time = Timer;
-//                Toast.makeText(getApplicationContext(), String.format(Locale.KOREA, "Timer :%d second", Timer), Toast.LENGTH_SHORT).show();
-            }
-        });
-        bt_dn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Timer -= 100;
-                time = Timer;
-//                Toast.makeText(getApplicationContext(), String.format(Locale.KOREA, "Timer :%d second", Timer), Toast.LENGTH_SHORT).show();
-
-            }
-        });
-
-
-
-        btn_start.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-                tmp=true;
-                writeFlag=true;
-                mViewMode = VIEW_MODE_START;
-                timerHandler.sendEmptyMessage(MESSAGE_TIMER_START);
-
-
-
-
-                // 분석할 이미지 생성
-                bmp = null;
-                Mat subimg = mRgba;
-                try {
-                    bmp = Bitmap.createBitmap(subimg.cols(), subimg.rows(), Bitmap.Config.ARGB_8888);
-                    Utils.matToBitmap(subimg, bmp);
-                } catch (CvException e) {
-                    Log.d(TAG, e.getMessage());
-                }
-
-
-                // 이미지 촬영후 필요없는 비디오부분 비활성화
-                final Bitmap picture =bmp;
-                mOpenCvCameraView.disableView();
-                mOpenCvCameraView.setVisibility(View.INVISIBLE);
-
-
-
-                // MainActivity가 아니므로 Thread를 통해서 이미지뷰에 이미지 입힘.
-                runOnUiThread(new Runnable() {
-
-                    @Override
-                    public void run() {
-                        ImageView iv = (ImageView) findViewById(R.id.imageView1);
-                        iv.setImageBitmap(picture);
-                        Log.i(TAG,"RunOnUIThread");
-                        btn_detect.setEnabled(true);
-                    }
-                });
-                subimg.release();
-//                mRgba.release();
-                FileOutputStream out = null;
-
-                long now = System.currentTimeMillis();
-                Date date = new Date(now);
-                SimpleDateFormat sdf = new SimpleDateFormat("yyyy.MM.dd.-HH:mm:ss", Locale.KOREA);
-                String filename = "Screenshot_" + sdf.format(date) + ".jpg";
-
-
-
-                File sd = new File(Environment.getExternalStorageDirectory().getPath() + "/UrineImages/");
-
-
-
-                boolean success = true;
-                if (!sd.exists()) {
-                    success = sd.mkdir();
-                }
-                if (success) {
-                    File dest = new File(sd, filename);
-                    try {
-                        out = new FileOutputStream(dest);
-
-                        bmp.compress(Bitmap.CompressFormat.JPEG, 100, out);
-
-
-                        // sendBroadCast :: 시스템db에 이미지가 있다는 것을 전달. (나중에 검색하기위해서)
-                        getApplicationContext().sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(dest)));
-                    } catch (NullPointerException e) {
-                        e.printStackTrace();
-                        Log.d(TAG, e.getMessage());
-                    } catch (FileNotFoundException e) {
-                        e.printStackTrace();
-                        Log.d(TAG, e.getMessage());
-
-                    } finally {
-                        try {
-                            if (out != null) {
-                                out.close();
-                                Log.d(TAG, "OK!!");
-                            }
-                        } catch (IOException e) {
-                            Log.d(TAG, e.getMessage() + "Error");
-                            e.printStackTrace();
-                        }
-                    }
-                }
-
-
-
-
-            }
-        });
-
     }
+//
+//        btn_start.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//
+//                tmp=true;
+//                writeFlag=true;
+//                mViewMode = VIEW_MODE_START;
+//                timerHandler.sendEmptyMessage(MESSAGE_TIMER_START);
+//
+//
+//
+//
+//                // 분석할 이미지 생성
+//                bmp = null;
+//                Mat subimg = mRgba;
+//                try {
+//                    bmp = Bitmap.createBitmap(subimg.cols(), subimg.rows(), Bitmap.Config.ARGB_8888);
+//                    Utils.matToBitmap(subimg, bmp);
+//                } catch (CvException e) {
+//                    Log.d(TAG, e.getMessage());
+//                }
+//
+//
+//                // 이미지 촬영후 필요없는 비디오부분 비활성화
+//                final Bitmap picture =bmp;
+//                mOpenCvCameraView.disableView();
+//                mOpenCvCameraView.setVisibility(View.INVISIBLE);
+//
+//
+//
+//                // MainActivity가 아니므로 Thread를 통해서 이미지뷰에 이미지 입힘.
+//                runOnUiThread(new Runnable() {
+//
+//                    @Override
+//                    public void run() {
+//                        ImageView iv = (ImageView) findViewById(R.id.imageView1);
+//                        iv.setImageBitmap(picture);
+//                        Log.i(TAG,"RunOnUIThread");
+//                        btn_detect.setEnabled(true);
+//                    }
+//                });
+//                subimg.release();
+////                mRgba.release();
+//                FileOutputStream out = null;
+//
+//                long now = System.currentTimeMillis();
+//                Date date = new Date(now);
+//                SimpleDateFormat sdf = new SimpleDateFormat("yyyy.MM.dd.-HH:mm:ss", Locale.KOREA);
+//                String filename = "Screenshot_" + sdf.format(date) + ".jpg";
+//
+//
+//
+//                File sd = new File(Environment.getExternalStorageDirectory().getPath() + "/UrineImages/");
+//
+//
+//
+//                boolean success = true;
+//                if (!sd.exists()) {
+//                    success = sd.mkdir();
+//                }
+//                if (success) {
+//                    File dest = new File(sd, filename);
+//                    try {
+//                        out = new FileOutputStream(dest);
+//
+//                        bmp.compress(Bitmap.CompressFormat.JPEG, 100, out);
+//
+//
+//                        // sendBroadCast :: 시스템db에 이미지가 있다는 것을 전달. (나중에 검색하기위해서)
+//                        getApplicationContext().sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(dest)));
+//                    } catch (NullPointerException e) {
+//                        e.printStackTrace();
+//                        Log.d(TAG, e.getMessage());
+//                    } catch (FileNotFoundException e) {
+//                        e.printStackTrace();
+//                        Log.d(TAG, e.getMessage());
+//
+//                    } finally {
+//                        try {
+//                            if (out != null) {
+//                                out.close();
+//                                Log.d(TAG, "OK!!");
+//                            }
+//                        } catch (IOException e) {
+//                            Log.d(TAG, e.getMessage() + "Error");
+//                            e.printStackTrace();
+//                        }
+//                    }
+//                }
+//
+//
+//
+//
+//            }
+//        });
+//
+//    }
 
 
     @Override
@@ -589,17 +488,14 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
                 } catch (Exception e) {
                     Intent i =new Intent(getApplicationContext(),MainActivity.class);
                     startActivityForResult(i, Activity.RESULT_OK);
-                    Log.i(TAG, e.toString());
+                    Log.i("AnalysisActivityResult", e.toString());
                 }
                 break;
             case VIEW_MODE_INIT:
 
                 Imgproc.rectangle(mRgba,new Point(900,300),new Point(950,350),new Scalar(255,255,255),2,1);
 
-                double[] tmpavg=average_RGB(925,325);
-                double[] rgb=mRgba.get(325,925);
-                double rst=calculateHue.getH(tmpavg);
-                Imgproc.putText(mRgba,String.format("RGB :%.1f %.1f %.1f H: %.3f",rgb[0],rgb[1],rgb[2],rst),new Point(850,300),1,2,new Scalar(255,255,255));
+
                 break;
         }
 
@@ -799,79 +695,57 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
         double distanceY = (sorted_y[1] - sorted_y[0]);
         double distance = Math.sqrt(distanceX * distanceX + distanceY * distanceY);
 
+
+        //각도와 거리비례에 따라 rectangle circle 크기조정 및 회전이동
+
         double ratio = distance / 1000;
-
         double angle = calculateAngle();
-
         middlex = (sorted_x[0] + sorted_x[2]) / 2;
         middley = (sorted_y[0] + sorted_y[2]) / 2;
 
-        loc_x[0] = middlex - 50;
-        loc_x[1] = middlex + 50;
-        loc_y[0] = middley - 50;
-        loc_y[1] = middley + 50;
-
 
         double tmpwith=sorted_x[1]-sorted_x[0];
-        double tmpheight=sorted_y[2]-sorted_y[1];
 
+
+
+
+        //각도와 카메라거리에 따라 비색표위치를 tracking하였으나, 사각형의 경우 제대로 반영이 안되어 취소. 원형 비색표이용하면 잘될듯.
         for (int i=0;i<11;i++){
-
-//            double x=middlex+(Math.cos(angle/2) * p[i].x - Math.sin(angle/2) * p[i].y)*ratio;
-//            double y=middley+ (Math.sin(angle/2) * p[i].x + Math.cos(angle/2) * p[i].y)*ratio;
-
             double x=tmpwith/17.3 * (i) +140;
-
-
             double y=0;
             Point sp=new Point(sorted_x[0] + x,sorted_y[0] +20);
             Point np=new Point(sp.x+40,sp.y+350);
 
+            for(int j=0;j<4;j++){
+                Point circle_center=new Point(sp.x+20,sp.y+(70*(j+1)));
+                Imgproc.circle(mRgba,circle_center,10,new Scalar(255,255,255),2);
+                double[] tmp_colorband_RGB= new double[3];
+                tmp_colorband_RGB=average_RGB(circle_center.x,circle_center.y);
+                colorbandHue[i][j]=calculateHue.getH(tmp_colorband_RGB);
+
+            }
+
 
             Imgproc.rectangle(mRgba,sp,np,new Scalar(255,255,255),2);
-//            Imgproc.circle(mRgba,new Point(np.x-20,np.y+170),10,new Scalar(255,255,255),2);
-//            Imgproc.circle(mRgba, new Point( x,y+440), (int) (20), new Scalar(255, 255, 255));
+            Imgproc.circle(mRgba,new Point(sp.x+20,np.y+100),10,new Scalar(255,255,255),2);
 
-//            Imgproc.rectangle(mRgba,new Point(     30*(i+1)+40*(i),30), new Point(30*(i+1)+40*(i+1),800),new Scalar(255,255,255),2);
-//
-//            Imgproc.circle(mRgba, new Point( 50+70*(i),880), (int) (20), new Scalar(255, 255, 255));
+            double[] tmp_strip_RGB=new double[3];
+            tmp_strip_RGB=average_RGB(sp.x+20,np.y+150);
+            stripHue[i]=calculateHue.getH(tmp_strip_RGB);
+
+
 
         }
 
 
 
 
-
-
-
-
-
-            CalculateHue calculateHue = new CalculateHue();
-
-
-            hue_1=calculateHue.getH(rgbV_GLOUCOSE);
-            hue_2=calculateHue.getH(rgbV_PROTEIN);
-            hue_3 = calculateHue.getH(rgbV_BILIRUBIN);
-            hue_4=calculateHue.getH(rgbV_UROBILINOGEN);
-
-
-
-            hue_avg1.add(hue_1);
-            hue_avg2.add(hue_2);
-            hue_avg3.add(hue_3);
-            hue_avg4.add(hue_4);
-            if (hue_avg1.size() > 1000 ) {
-                hue_avg1.clear();
-                hue_avg2.clear();
-                hue_avg3.clear();
-                hue_avg4.clear();
-            }
-
-
-
-
     }
 
+
+
+
+    //핸드폰 기울어진 각도구함. 두개 object의 위치를 기반으로 각도 계산
     double calculateAngle() {
         double dx = sorted_x[1] - sorted_x[0];
         double dy = sorted_y[1] - sorted_y[0];
@@ -881,63 +755,16 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
 
         return radian;
     }
-    void drawPoint() {
-
-        int step = 25;
-        int loc=35;
-        for (int i = 0; i <= 9; i++) {
-            p[i]=new Point(-400+step*i,-200);
-        }
 
 
-
-
-
-    }
-
-    private void writeToFileAll() {
+    //그래프표시용 텍스트파일 생성
+    private void writeResult() {
 
         int index=1;
         long now = System.currentTimeMillis(); // 현재시간 받아오기
         Date date = new Date(now); // Date 객체 생성
         SimpleDateFormat sdf = new SimpleDateFormat("YYYY-MM-dd", Locale.KOREA);
         String nowTime = sdf.format(date);
-
-
-
-        double tmp=0;
-
-        //시간, 날짜 구분하기 위한 `-` 추가.
-        try {
-
-            for (int i = 0; i < dbH1.size(); i++) {
-                tmp+= dbH1.get(i);
-            }
-            msgH_gloucose= String.format(Locale.KOREA,"-%.3f",tmp/dbH1.size());
-            tmp=0;
-
-            for (int i = 0; i < dbH2.size(); i++) {
-                tmp += dbH2.get(i);
-            }
-            msgH_protien= String.format(Locale.KOREA,"-%.3f",tmp/dbH2.size());
-            tmp=0;
-
-            for (int i = 0; i < dbH3.size(); i++) {
-                tmp += dbH3.get(i);
-            }
-            msgH_bilirubin= String.format(Locale.KOREA,"-%.3f",tmp/dbH3.size());
-            tmp=0;
-
-            for (int i = 0; i < dbH4.size(); i++) {
-                tmp += dbH4.get(i);
-            }
-            msgH_urobilinogen = String.format(Locale.KOREA,"-%.3f",tmp/dbH4.size());
-
-            tmp = 0;
-
-        }catch (Exception e){
-            Toast.makeText(getApplicationContext(),e.toString(),Toast.LENGTH_SHORT).show();
-        }
 
         String[] sssss=nowTime.split("-");
 
@@ -1016,156 +843,15 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
             bw4.flush();
             bw4.close();
 
-
-
-
-            dbH1.clear();
-            dbH2.clear();
-            dbH3.clear();
-            dbH4.clear();
-
-
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
 
-    //도형 그림.
-    void drawRect(){
-        Imgproc.rectangle(mRgba,tl,br,new Scalar(255,255,255),5);
 
-
-        int center_x=(int)((br.x+tl.x)/2);
-        int center_y=(int)((br.y+tl.y)/2);
-        int width=(int)(br.x-tl.x);
-        int height=(int)(br.y-tl.y);
-        int len=(int)(width * 0.038);
-
-
-
-        // Tester 용지가 들어올 부분
-        middleLine_from[0]=new Point(tl.x+50,center_y-(int)(len/2));
-        middleLine_to[0]=new Point(middleLine_from[0].x+len,center_y+(int)(len/2));
-
-
-
-        // Tester 용지 각 패드 위치 설정
-        for (int i=1;i<12;i++){
-            middleLine_from[i] = new Point(middleLine_to[i-1].x  + len, center_y-(int)(len/2));
-            middleLine_to[i] = new Point(middleLine_from[i].x + len,center_y+(int)(len/2) );
-        }
-
-        // 각 패드마다 비색표 위치 설정
-        for (int i=0;i<12;i++){
-
-            for (int j=0;j<6;j++) {
-                if (j == 0) {
-                    reagents[i][j] = new Point((middleLine_from[i].x + middleLine_to[i].x) / 2, br.y - 100);
-                }
-
-                if (j == 1 || j == 2) {
-                    reagents[i][j] = new Point((middleLine_from[i].x + middleLine_to[i].x) / 2, reagents[i][j - 1].y - 2 * len);
-                }
-
-                if (j == 3){
-                    reagents[i][j]=new Point((middleLine_from[i].x+middleLine_to[i].x)/2,middleLine_from[i].y-100);
-                }
-
-                if (j == 4 || j == 5) {
-                    reagents[i][j] = new Point((middleLine_from[i].x + middleLine_to[i].x) / 2, reagents[i][j - 1].y - 2 * len);
-                }
-            }
-        }
-
-
-        // roi 그리고 검사실시
-               for (int i=0;i<12;i++){
-
-
-            Imgproc.rectangle(mRgba, middleLine_from[i], middleLine_to[i],new Scalar(255,255,255),5);
-
-
-            if (i==0 || i==2 || i==4 || i==7 || i==8){
-                for (int j=0;j<6;j++){
-                    Imgproc.circle(mRgba, reagents[i][j], len/2, new Scalar(255, 255, 255), 3);
-
-                    if(writeFlag) {
-                        rgbV_1 = mRgba.get((int) reagents[i][j].y, (int) reagents[i][j].x);
-                        hue_value = calculateHue.getH(rgbV_1);
-
-                        Log.i(TAG, String.format("reagent i j %d %d, Hue : %.1f, RGB : %.1f %.1f %.1f", i, j, hue_value, rgbV_1[0], rgbV_1[1], rgbV_1[2]));
-                    }
-
-                }
-            }
-            if (i==3 || i==6 || i==9){
-                for (int j=0;j<5;j++){
-                    Imgproc.circle(mRgba, reagents[i][j], len/2, new Scalar(255, 255, 255), 3);
-
-
-                    if(writeFlag) {
-                        rgbV_1 = mRgba.get((int) reagents[i][j].y, (int) reagents[i][j].x);
-
-
-                        hue_value = calculateHue.getH(rgbV_1);
-                        Log.i(TAG, String.format("reagent i j %d %d, Hue : %.1f, RGB : %.1f %.1f %.1f", i, j, hue_value, rgbV_1[0], rgbV_1[1], rgbV_1[2]));
-                    }
-                }
-            }
-            if (i==1 || i==10){
-                for (int j=0;j<4;j++){
-                    Imgproc.circle(mRgba, reagents[i][j], len/2, new Scalar(255, 255, 255), 3);
-
-                    if(writeFlag) {
-
-                        rgbV_1 = mRgba.get((int) reagents[i][j].y, (int) reagents[i][j].x);
-                        hue_value = calculateHue.getH(rgbV_1);
-
-                        Log.i(TAG, String.format("reagent i j %d %d, Hue : %.1f, RGB : %.1f %.1f %.1f", i, j, hue_value, rgbV_1[0], rgbV_1[1], rgbV_1[2]));
-                    }
-                }
-            }
-            if (i==5){
-                for (int j=0;j<5;j+=3){
-                    Imgproc.circle(mRgba, reagents[i][j], len/2, new Scalar(255, 255, 255), 3);
-
-                    if(writeFlag) {
-                        rgbV_1 = mRgba.get((int) reagents[i][j].y, (int) reagents[i][j].x);
-                        hue_value = calculateHue.getH(rgbV_1);
-
-                        Log.i(TAG, String.format("reagent i j %d %d, Hue : %.1f, RGB : %.1f %.1f %.1f", i, j, hue_value, rgbV_1[0], rgbV_1[1], rgbV_1[2]));
-                    }
-                }
-            }
-            if (i==11){
-
-                Imgproc.circle(mRgba, reagents[i][0], len/2, new Scalar(255, 255, 255), 3);
-
-                if(writeFlag) {
-
-
-                    rgbV_1 = mRgba.get((int) reagents[i][0].y, (int) reagents[i][0].x);
-                    hue_value = calculateHue.getH(rgbV_1);
-                    Log.i(TAG, String.format("reagent i j %d %d, Hue : %.1f, RGB : %.1f %.1f %.1f", i, 0, hue_value, rgbV_1[0], rgbV_1[1], rgbV_1[2]));
-                    writeFlag=false;
-                }
-
-            }
-
-
-        }
-
-
-
-
-    }
-
-    int countflag = 0;
-
-
+    ///////////////측정버튼을 누르고 초단위로 동작하는 핸들러//////////////////
     private class TimerHandler extends Handler {
-
         @Override
         public void handleMessage(Message msg) {
             switch (msg.what) {
@@ -1173,87 +859,119 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
 
 
                     this.removeMessages(MESSAGE_TIMER_REPEAT);
-                    this.sendEmptyMessage(MESSAGE_TIMER_REPEAT);
+                    this.sendEmptyMessageDelayed(MESSAGE_TIMER_REPEAT,1000);
                     break;
 
                 case MESSAGE_TIMER_REPEAT:
-
-
-//                        writeToFile();
-
-                        msg_rgb = "";
-                        msg_hue = "";
-                        msg_bilirubin = "";
-
                         Double avg_hueValue1 = 0.0,avg_hueValue2=0.0,avg_hueValue3=0.0,avg_hueValue4=0.0;
 
-
-                        //잡음제거를 위함.
-                        for (int i = 0; i < hue_avg1.size(); i++) {
-                            avg_hueValue1 += hue_avg1.get(i);
-                        }
-                        avg_hueValue1 = avg_hueValue1 / hue_avg1.size();
-
-                        for (int i = 0; i < hue_avg2.size(); i++) {
-                            avg_hueValue2 += hue_avg2.get(i);
-                        }
-                        avg_hueValue2 = avg_hueValue2 / hue_avg2.size();
-
-                        for (int i = 0; i < hue_avg3.size(); i++) {
-                            avg_hueValue3 += hue_avg3.get(i);
-                        }
-                        avg_hueValue3 = avg_hueValue3 / hue_avg3.size();
-
-                        for (int i = 0; i < hue_avg4.size(); i++) {
-                            avg_hueValue4 += hue_avg4.get(i);
-                        }
-                        avg_hueValue4 = avg_hueValue4 / hue_avg4.size();
-
-                        hue_avg1.clear();
-                        hue_avg2.clear();
-                        hue_avg3.clear();
-                        hue_avg4.clear();
+                        try{
+                            HashMap<String,Double> trendline =null;
+                            double[] tmp_array={0,1,2,3};
+                            for(int i=0;i<11;i++) {
+                                for(int j=0;j<4;j++) {
+                                    //추세선 계산
+                                    trendline = calculateHue.getTrendLine(tmp_array, colorbandHue[i]);
+                                }
 
 
-                        if(!avg_hueValue1.isNaN() && !avg_hueValue2.isNaN() && !avg_hueValue3.isNaN() && !avg_hueValue4.isNaN())
-                        {
-                            dbH1.add(avg_hueValue1);
-                            dbH2.add(avg_hueValue2);
-                            dbH3.add(avg_hueValue3);
-                            dbH4.add(avg_hueValue4);
+                                //추세선 : y=ax+b     y=소변검사지 농도  x= 농도단계
+                                //추세선 기울기 a
+                                Double slope=trendline.get("a");
+
+                                //추세선 y절편 b
+                                Double intercept=trendline.get("b");
+
+
+
+                                // x=(y-b)/a
+                                if(!slope.isNaN() && !intercept.isNaN()){
+                                    resultIndex[i]=(stripHue[i]-intercept)/slope;
+                                    if(resultIndex[i]>5) resultIndex[i]=5;
+                                }else{
+                                    resultIndex[i]=-1000;
+                                }
+
+                                Log.i("AnalysisActivityResult",Double.toString(resultIndex[i]));
+                            }
+
+                        }catch (Exception e){
+                            Log.i(TAG,e.toString());
                         }
 
 
 
 
-                        Log.i(TAG,String.format("%.2f %.2f %.2f %.2f",avg_hueValue1,avg_hueValue2,avg_hueValue3,avg_hueValue4));
-//                        tx1.setText("save remained : " + Integer.toString((Timer - count) / 10));
-                        count += 10;
-
-
-
-
-                        this.sendEmptyMessageDelayed(MESSAGE_TIMER_STOP, 3000);
+                        // 제대로 인식되었으면 3초 뒤에 Result화면으로
+                        if(colorbandHue[0][0]>0){
+                            this.sendEmptyMessageDelayed(MESSAGE_TIMER_STOP, 3000);
+                        }
+                        // 아니면 반복.
+                        else {
+                            this.sendEmptyMessageDelayed(MESSAGE_TIMER_REPEAT, 1000);
+                        }
 
                     break;
 
                 case MESSAGE_TIMER_STOP:
 //                    Toast.makeText(getApplicationContext(), "Timer Stoped", Toast.LENGTH_SHORT).show();
 
-                    Intent i =new Intent(getApplicationContext(),ResultActivity.class);
-                    i.putExtra("tv2",3);
-                    i.putExtra("tv3",3);
-                    i.putExtra("tv4",3);
-                    i.putExtra("tv5",3);
-                    i.putExtra("tv6",3);
-                    i.putExtra("tv7","N");
-                    i.putExtra("tv8",3);
-                    i.putExtra("tv9",3);
-                    i.putExtra("tv10",3);
-                    i.putExtra("tv11",3);
-                    i.putExtra("tv12",3);
+                    Intent resultItems =new Intent(getApplicationContext(),ResultActivity.class);
 
-                    startActivity(i);
+                    ArrayList<Double> items=new ArrayList<Double>();
+
+                    //농도단계를 이용해 농도추정후 Result 화면으로 넘김.
+                    //INDEX=0 : 잠혈
+                    //INDEX=1 : 빌리루빈
+                    //INDEX=2 : 우로빌리노겐
+                    //INDEX=3 : 케톤체
+                    //INDEX=4 : 단백질
+                    //INDEX=5 : 아질산염
+                    //INDEX=6 : 포도당
+                    //INDEX=7 : pH
+                    //INDEX=8 : 비중
+                    //INDEX=9 : 백혈구
+                    //INDEX=10 : 아스코르브산
+                    //
+
+                    ////////////////////////////////////////////////////////////////////////////////////////////////////////
+                    //아직 정확한 농도 계산식은 실험중! 아래 식은 대략적인 값을 나타내며 정확한 값은 좀더 업데이트해야함 ///
+                    ////////////////////////////////////////////////////////////////////////////////////////////////////////
+                    for(int i=0;i<11;i++){
+
+                        //정상치 넘어가면 -1111로
+                        if(resultIndex[i]<0){
+                            items.add(-1111.0);
+                        }
+
+
+                        /// 계산식 업데이트필요///
+                        else{
+                            if(i==0) items.add((resultIndex[i]*50) +10);
+                            if(i==1) items.add((resultIndex[i]*10) +9);
+                            if(i==2) items.add((resultIndex[i]*2) +2);
+                            if(i==3) items.add((resultIndex[i]*20) -10);
+                            if(i==4) items.add((resultIndex[i]*60) +10);
+                            if(i==5) {
+                                if(resultIndex[i]>=2) items.add(1.0);
+                            }else{
+                                items.add(-1.0);
+                            }
+                            if(i==6) items.add((resultIndex[i]-1) +100);
+                            if(i==7) items.add((resultIndex[i]+4));
+                            if(i==8) items.add((resultIndex[i]*10) +1000);
+                            if(i==9) items.add((resultIndex[i]*50) -25);
+                            if(i==10) items.add((resultIndex[i]*10) -10);
+                            /// 계산식 업데이트필요///
+                        }
+                    }
+
+
+
+                    resultItems.putExtra("result",items);
+
+
+                    startActivity(resultItems);
 
                     this.removeMessages(MESSAGE_TIMER_REPEAT);
 
@@ -1266,8 +984,10 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
 
     }
 
-    double[] average_RGB(int x, int y) {
+    double[] average_RGB(double xx, double yy) {
 
+        int x = (int)xx;
+        int y=  (int)yy;
         double tmpR = 0;
         double tmpG = 0;
         double tmpB = 0;
@@ -1298,52 +1018,4 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
     }
 
 
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        //https://black-jin0427.tistory.com/120 참고했음.
-
-
-
-        //분석뒤 -> 앨범으로 자동이동
-
-        if(requestCode==1111) {
-            Cursor cursor = null;
-            File tempFile=null;
-            try {
-                Uri photoUri = data.getData();
-
-                /*
-                 *  Uri 스키마를
-                 *  content:/// 에서 file:/// 로  변경한다.
-                 */
-                String[] proj = {MediaStore.Images.Media.DATA};
-                assert photoUri != null;    //assert :: true -> pass false-> stop & message
-                cursor = getContentResolver().query(photoUri, proj, null, null, null);
-
-                assert cursor != null;
-                int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
-
-                cursor.moveToFirst();
-
-                tempFile = new File(cursor.getString(column_index));
-            } catch (Exception e) {
-                Log.i(TAG, e.toString());
-            } finally {
-                if (cursor != null) {
-                    cursor.close();
-                }
-            }
-
-
-
-        }
-
-
-    }
-
-    private void setImages() {
-
-    }
 }

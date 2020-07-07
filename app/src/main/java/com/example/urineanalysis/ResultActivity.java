@@ -32,6 +32,7 @@ import com.example.urineanalysis.utils.FolderUtil;
 
 import org.opencv.android.Utils;
 import org.opencv.core.Mat;
+import org.w3c.dom.Text;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -63,6 +64,10 @@ public class ResultActivity extends AppCompatActivity {
        setContentView(R.layout.activity_result);
 
 
+
+        ArrayList<Double> Items=(ArrayList<Double>)getIntent().getSerializableExtra("result");
+
+
         TextView textView=findViewById(R.id.textView8);
         TextView textView1=findViewById(R.id.tv_2);
         TextView textView2=findViewById(R.id.tv_3);
@@ -78,6 +83,9 @@ public class ResultActivity extends AppCompatActivity {
 
         Random random=new Random();
         random.nextInt(10);
+
+
+        //////////////// 임시로 랜덤값으로 표시되는부분 ////////////////
         textView1.setText(String.format(Locale.KOREA,"%d",random.nextInt(10)));
         textView2.setText(String.format(Locale.KOREA,"%d",random.nextInt(10)));
         textView3.setText(String.format(Locale.KOREA,"%d",random.nextInt(10)));
@@ -90,6 +98,21 @@ public class ResultActivity extends AppCompatActivity {
         textView10.setText(String.format(Locale.KOREA,"%d",random.nextInt(40)));
         textView11.setText(String.format(Locale.KOREA,"%d",random.nextInt(8)));
 
+
+
+
+    ////////////////    //실제 데이터 표시되는부분 ////////////////
+//        textView1.setText(String.format(Locale.KOREA,"%.2f",Items.get(0)));
+//        textView2.setText(String.format(Locale.KOREA,"%.2f",Items.get(1)));
+//        textView3.setText(String.format(Locale.KOREA,"%.2f",Items.get(2)));
+//        textView4.setText(String.format(Locale.KOREA,"0.%d",random.nextInt(10)));
+//        textView5.setText(String.format(Locale.KOREA,"%d",random.nextInt(5)));
+//        textView6.setText("양성");
+//        textView7.setText(String.format(Locale.KOREA,"%d",random.nextInt(10)));
+//        textView8.setText(String.format(Locale.KOREA,"%d",5));
+//        textView9.setText(String.format(Locale.KOREA,"%d",random.nextInt(70)+1000));
+//        textView10.setText(String.format(Locale.KOREA,"%d",random.nextInt(40)));
+//        textView11.setText(String.format(Locale.KOREA,"%d",random.nextInt(8)));
 
         textView.setOnClickListener(new View.OnClickListener() {
             @Override
