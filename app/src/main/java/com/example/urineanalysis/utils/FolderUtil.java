@@ -65,6 +65,10 @@ public class FolderUtil {
                         counter--;
                         continue;
                     }
+                    if(line.equals("")){
+                        counter--;
+                        continue;
+                    }
 //                    Log.i(TAG,String.format("%d %.3f",counter,avg));
                     data.add(doub);
                     avg+=doub;

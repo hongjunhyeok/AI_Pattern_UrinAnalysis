@@ -77,7 +77,7 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
     private static final int VIEW_MODE_START = 1;
     private static final int VIEW_MODE_INIT = 4;
 
-    private boolean is_detected= false;
+    private boolean is_detected= true;
     private static final int MESSAGE_TIMER_START = 100;
     private static final int MESSAGE_TIMER_REPEAT = 101;
     private static final int MESSAGE_TIMER_STOP = 102;
@@ -360,7 +360,7 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
                     try {
                         mViewMode = VIEW_MODE_START;
 
-                        timerHandler.sendEmptyMessage(MESSAGE_TIMER_START);
+//                        timerHandler.sendEmptyMessage(MESSAGE_TIMER_START);
 
                         Timer += 5;
                         btn_detect.setText("STOP");
@@ -461,7 +461,7 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
 
         frame_num++;
 //        preprocessor.changeImagePreviewOrientation(mRgba,mRgbaF,mRgbaT);
-        final int viewMode = mViewMode;
+        final int viewMode = VIEW_MODE_INIT;
         switch (viewMode) {
             case VIEW_MODE_START:
 
@@ -494,7 +494,14 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
 
 
                     }
-                    doProcess();
+                    if (bubble_array.length == 4) {
+                        doProcess();
+                        if(is_detected){
+                            timerHandler.sendEmptyMessage(MESSAGE_TIMER_START);
+                            is_detected=false;
+                        }
+                    }
+
                 } catch (Exception e) {
                     Intent i =new Intent(getApplicationContext(),MainActivity.class);
                     startActivityForResult(i, Activity.RESULT_OK);
@@ -638,7 +645,7 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
 
 
     protected void doProcess() {
-        if (bubble_array.length == 4) {
+
 
 
             Double array_x[] = new Double[4];
@@ -832,7 +839,7 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
 
 
 
-        }
+
 
     }
 
@@ -865,17 +872,18 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
 
         try {
             File file = new File(Environment.getExternalStorageDirectory() + "/OneFileUrineCup");
-            File chartfile =new File(Environment.getExternalStorageDirectory() + "/OneFileUrineCup"+"/chart.txt");
-            File gloufile =new File(Environment.getExternalStorageDirectory() + "/OneFileUrineCup"+"/chart_gloucose.txt");
-            File protfile =new File(Environment.getExternalStorageDirectory() + "/OneFileUrineCup"+"/chart_prot.txt");
-            File rbcfile =new File(Environment.getExternalStorageDirectory() + "/OneFileUrineCup"+"/chart_rbc.txt");
-            File phfile =new File(Environment.getExternalStorageDirectory() + "/OneFileUrineCup"+"/chart_ph.txt");
-            File resultfile =new File(Environment.getExternalStorageDirectory() + "/OneFileUrineCup"+"/result.txt");
+            File chartfile =new File(Environment.getExternalStorageDirectory() + "/OneFileUrineCup/"+"/chart.txt");
+            File gloufile =new File(Environment.getExternalStorageDirectory() + "/OneFileUrineCup/"+"/gl.txt");
+            File protfile =new File(Environment.getExternalStorageDirectory() + "/OneFileUrineCup/"+"/pr.txt");
+            File rbcfile =new File(Environment.getExternalStorageDirectory() + "/OneFileUrineCup/"+"/rb.txt");
+            File phfile =new File(Environment.getExternalStorageDirectory() + "/OneFileUrineCup/"+"/ph.txt");
+            File resultfile =new File(Environment.getExternalStorageDirectory() + "/OneFileUrineCup/"+"/result.txt");
             File huefile =new File(Environment.getExternalStorageDirectory() + "/OneFileUrineCup/"+"/hue_"+nowTime+".txt");
             if (!file.exists()) {
                 file.mkdir();
             }
-
+            protfile.createNewFile();
+            protfile.createNewFile();
             if(!chartfile.exists()){
                 chartfile.createNewFile();
             }
@@ -914,16 +922,20 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
             String line;
             String contents="";
             while ((line = br1.readLine()) != null) {
-                contents+=(line);
-                contents+="\r\n";
+
+                    contents += (line);
+                contents +="\r\n";
+
             }
             br1.close();
             reader1.close();
 
             FileWriter writer1=  new FileWriter(gloufile);
-            writer1.append(msg_glou);
-            writer1.append("\r\n");
-            writer1.append(contents);
+            if(contents.length()>0)
+                writer1.append(contents);
+                writer1.append(msg_glou);
+
+
             writer1.flush();
             writer1.close();
             ////////////포도당차트용 데이터 생성//////////////////
@@ -934,16 +946,20 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
             String pline;
             String pcontents="";
             while ((pline = pbr1.readLine()) != null) {
-                pcontents+=(pline);
-                pcontents+="\r\n";
+
+
+                    pcontents += (pline);
+                pcontents +="\r\n";
+
             }
             pbr1.close();
             pr.close();
 
             FileWriter pwriter1=  new FileWriter(protfile);
-            pwriter1.append(msg_prot);
-            pwriter1.append("\r\n");
-            pwriter1.append(pcontents);
+            if(pcontents.length()>0)
+                pwriter1.append(pcontents);
+                pwriter1.append(msg_prot);
+
             pwriter1.flush();
             pwriter1.close();
             ////////////단백질차트용 데이터 생성//////////////////
@@ -954,16 +970,22 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
             String rline;
             String rcontents="";
             while ((rline = rbr1.readLine()) != null) {
-                rcontents+=(rline);
-                rcontents+="\r\n";
+
+
+
+                    rcontents += (rline);
+                rcontents +="\r\n";
+
             }
             rbr1.close();
             rreader1.close();
 
             FileWriter rwriter1=  new FileWriter(rbcfile);
-            rwriter1.append(msg_rbc);
-            rwriter1.append("\r\n");
+
+
+            if(rcontents.length()>1)
             rwriter1.append(rcontents);
+            rwriter1.append(msg_rbc);
             rwriter1.flush();
             rwriter1.close();
             ////////////rbc차트용 데이터 생성//////////////////
@@ -974,16 +996,22 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
             String hline;
             String hcontents="";
             while ((hline = hbr1.readLine()) != null) {
-                hcontents+=(hline);
-                hcontents+="\r\n";
+
+
+                    hcontents += (hline);
+                    hcontents +="\r\n";
+
             }
             hbr1.close();
             hreader1.close();
 
             FileWriter hwriter1=  new FileWriter(phfile);
-            hwriter1.append(msg_ph);
-            hwriter1.append("\r\n");
-            hwriter1.append(hcontents);
+
+
+
+            if(hcontents.length()>0)
+                hwriter1.append(hcontents);
+                hwriter1.append(msg_ph);
             hwriter1.flush();
             hwriter1.close();
             ////////////ph차트용 데이터 생성//////////////////
@@ -1106,7 +1134,7 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
                     //반복수행
                 case MESSAGE_TIMER_REPEAT:
 
-                    if (Timer - (count) < 0) {
+                    if (count>5) {
                         tx1.setText("save Finished");
                         this.sendEmptyMessageDelayed(MESSAGE_TIMER_STOP, 1000);
 
@@ -1219,7 +1247,8 @@ public class AnalysisActivity extends AppCompatActivity implements CameraBridgeV
 //
                     hue_avg.clear();
                     write_data();
-
+                    Intent i = new Intent(getApplicationContext(),MainActivity.class);
+                    startActivity(i);
                     this.removeMessages(MESSAGE_TIMER_REPEAT);
                     break;
             }

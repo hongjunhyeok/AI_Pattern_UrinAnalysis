@@ -58,7 +58,10 @@ public class MainActivity extends AppCompatActivity {
         btn_album = findViewById(R.id.btn_album);
         btn_chart = findViewById(R.id.btn_chart);
         btn_result = findViewById(R.id.btn_result);
+        ImageView iv = findViewById(R.id.ImageView);
 
+
+        iv.setImageResource(R.drawable.logo);
         btn_analysis.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -83,7 +86,7 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View view) {
 
 
-                Intent i = new Intent(getApplicationContext(), Chart2Activity.class);
+                Intent i = new Intent(getApplicationContext(), chartmenu.class);
 //                Intent geti=getIntent();
 //
 //                try {
