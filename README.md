@@ -96,18 +96,36 @@
 ![image](https://user-images.githubusercontent.com/34786411/105129134-c57ba900-5b27-11eb-9553-5d1e58cb4b6b.png)
      
      
+     
+     
+     
 ## [결과 및 논의점]
 
-1. 측정한 결과는 표와 그래프로 확인이 가능하도록 제작
+1. 측정한 결과는 표와 그래프로 확인이 가능하도록 제작하였으며 실시간으로 이미지처리가 가능하도록 하였음.
 
+
+[실시간 이미지처리 화면]
+![image](https://user-images.githubusercontent.com/34786411/105130792-02956a80-5b2b-11eb-85f4-0946131566cd.png)
+
+[결과 차트 및 그래프]
 ![image](https://user-images.githubusercontent.com/34786411/105129571-b517fe00-5b28-11eb-8ef9-5fcb3f2c55d9.png)
 
+![image](https://user-images.githubusercontent.com/34786411/105131118-a5e67f80-5b2b-11eb-9d3a-d85081c90b98.png)
+
+
+
 2. 측정한 결과값은 Volume, 시간에 변동없이 일정하게 Saturation을 보였음
+
+
 ![image](https://user-images.githubusercontent.com/34786411/105129634-d37df980-5b28-11eb-8b38-ebd880b5fe6c.png)
 
 
-3. Tensorflow를 이용한 질병진단의 경우 충분한 환자데이터를 확보하지 못해 실험을 진행하지 못하였으나, 
-약 70%수준의 정확도를 보여 기대에 못미치는 수준이었으며 예상되는 문제점은 다음과 같다.
+
+
+
+3. Tensorflow를 이용한 질병진단의 경우 충분한 환자데이터를 확보하지 못해 실험을 진행하지 못하였다.
+
+결론적으론 70%수준의 정확도를 보여 기대에 못미치는 수준이었으며 예상되는 문제점은 다음과 같다.
 
   - 기존 건강검진데이터와 소변검사의 케이스가 정확하게 맞지않는다.
   
