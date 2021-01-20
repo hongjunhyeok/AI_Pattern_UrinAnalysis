@@ -91,6 +91,10 @@
      ![image](https://user-images.githubusercontent.com/34786411/105128047-86e4ef00-5b25-11eb-9ef1-7e219d8b4e62.png)
      
      
+## 최종 시스템 도식도
+
+![image](https://user-images.githubusercontent.com/34786411/105129134-c57ba900-5b27-11eb-9553-5d1e58cb4b6b.png)
+     
      
 ## [결과 및 논의점]
 
@@ -102,22 +106,18 @@
 ![image](https://user-images.githubusercontent.com/34786411/105129634-d37df980-5b28-11eb-8b38-ebd880b5fe6c.png)
 
 
-3. Tensorflow를 이용한 질병진단의 경우 충분한 환자데이터를 확보하지 못해 실험을 진행하지 못하였으나 약 70%수준의 정확도를 보였음.
-  예상되는 문제점은 다음과 같음
+3. Tensorflow를 이용한 질병진단의 경우 충분한 환자데이터를 확보하지 못해 실험을 진행하지 못하였으나, 
+약 70%수준의 정확도를 보여 기대에 못미치는 수준이었으며 예상되는 문제점은 다음과 같다.
+
   - 기존 건강검진데이터와 소변검사의 케이스가 정확하게 맞지않는다.
   
   - 소변검사 -> 건강검진 데이터와 치환하는 과정에서 선형성을 확보하지 못했다.
   
   - 소변검사를 이용한 환자데이터의 수가 현저히 적다.
   
-  다만 이러한 문제점은 데이터베이스를 활용한 업데이트와 추가적인 데이터의 확보를 통해 정확도향상을 진행할 수 있을 것으로 판단함.
+  다만 이러한 문제점은 데이터베이스를 활용한 업데이트와 추가적인 데이터의 확보를 통해 정확도향상을 진행할 수 있을 것으로 판단
   
-## 최종 시스템 도식도
-
-![image](https://user-images.githubusercontent.com/34786411/105129134-c57ba900-5b27-11eb-9553-5d1e58cb4b6b.png)
 
 
-## 시험인증기관 시험성적서
 
-![image](https://user-images.githubusercontent.com/34786411/105129988-88181b00-5b29-11eb-94da-c0cb90d55233.png)
-![image](https://user-images.githubusercontent.com/34786411/105129962-7d5d8600-5b29-11eb-8dd6-f8784ae33839.png)
+
