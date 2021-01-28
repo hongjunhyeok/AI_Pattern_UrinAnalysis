@@ -69,7 +69,7 @@
   - Training Function, Hidden Layer 개수, Learning Rate는 각각 다음 다음 도표와 같이 설정
   - Hidden Layer의 경우는 10x10의 3층구조를 사용
   - Learning Rate는 0.001을 이용
-  모델 학습에 필요한 기본 설정과 아이디어는 [reference] (https://cultivo-hy.github.io/deep%20learning/python/tensorflow/2019/03/12/%EB%94%A5%EB%9F%AC%EB%8B%9D-%EC%8B%A4%EC%8A%B5/)를 이용
+  모델 학습에 필요한 기본 설정과 아이디어는 [reference](https://cultivo-hy.github.io/deep%20learning/python/tensorflow/2019/03/12/%EB%94%A5%EB%9F%AC%EB%8B%9D-%EC%8B%A4%EC%8A%B5/)c참고
   
   ![image](https://user-images.githubusercontent.com/34786411/105127416-34ef9980-5b24-11eb-879c-33aace616f5b.png)
   
